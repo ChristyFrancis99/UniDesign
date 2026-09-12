@@ -83,6 +83,29 @@ class ModelErrorBoundary extends Component<
   }
 }
 
+function getVisibleModelBounds(scene: THREE.Object3D) {
+  const box = new THREE.Box3();
+  const meshBox = new THREE.Box3();
+  const position = new THREE.Vector3();
+
+  scene.updateMatrixWorld(true);
+
+  scene.traverse((object) => {
+    if (!(object instanceof THREE.Mesh) || !object.visible || !object.geometry) return;
+
+    const geometry = object.geometry;
+    if (!geometry.boundingBox) geometry.computeBoundingBox();
+    if (!geometry.boundingBox) return;
+
+    meshBox.copy(geometry.boundingBox).applyMatrix4(object.matrixWorld);
+    box.union(meshBox);
+  });
+
+  if (box.isEmpty()) return null;
+  box.getCenter(position);
+  return { box, center: position };
+}
+
 function InteriorModel() {
   const { scene } = useGLTF(MODEL_URL);
   const groupRef = useRef<THREE.Group>(null);
@@ -94,8 +117,8 @@ function InteriorModel() {
     const group = groupRef.current;
     if (!group) return;
 
-    // Remove only known panorama/background objects from the supplied scene.
-    // Keeping the rest of the GLB intact avoids accidentally hiding interior geometry.
+    // The supplied GLB contains a large panorama/background scene. Hide only
+    // those known background objects before calculating the interior bounds.
     scene.traverse((object) => {
       const name = object.name.toLowerCase();
       if (name.includes("panorama") || name.includes("sendai") || name.includes("360")) {
@@ -103,56 +126,67 @@ function InteriorModel() {
       }
     });
 
-    const box = new THREE.Box3().setFromObject(scene);
-    const size = new THREE.Vector3();
-    const center = new THREE.Vector3();
-    box.getSize(size);
-    box.getCenter(center);
-
-    const maxDimension = Math.max(size.x, size.y, size.z);
-    if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
+    // IMPORTANT: Box3.setFromObject(scene) can still include hidden panorama
+    // geometry. Build the bounds from visible meshes only so the room is not
+    // scaled down to an invisible point.
+    const bounds = getVisibleModelBounds(scene);
+    if (!bounds) {
       setModelError("The GLB contains no visible interior geometry.");
+      return;
+    }
+
+    const size = new THREE.Vector3();
+    bounds.box.getSize(size);
+    const maxDimension = Math.max(size.x, size.y, size.z);
+
+    if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
+      setModelError("The GLB contains invalid interior geometry bounds.");
       return;
     }
 
     setModelError(null);
 
-    // Normalize the model into a predictable viewing volume.
+    // Normalize only the actual visible interior into a predictable volume.
     const targetSize = 8;
     const scale = targetSize / maxDimension;
     group.scale.setScalar(scale);
-    group.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+    group.position.set(
+      -bounds.center.x * scale,
+      -bounds.center.y * scale,
+      -bounds.center.z * scale,
+    );
 
     const normalizedSize = size.clone().multiplyScalar(scale);
     const normalizedHeight = Math.max(normalizedSize.y, 2);
     const eyeHeight = Math.max(0.35, normalizedHeight * 0.38);
-    const cameraHeight = -normalizedHeight / 2 + eyeHeight;
-    const distance = Math.max(normalizedSize.x, normalizedSize.z, 4) * 0.75;
+    const targetY = -normalizedHeight / 2 + eyeHeight;
+    const distance = Math.max(normalizedSize.x, normalizedSize.z, 4) * 0.8;
 
-    camera.position.set(distance, cameraHeight + normalizedHeight * 0.08, distance);
+    camera.position.set(distance, targetY + normalizedHeight * 0.08, distance);
     camera.near = 0.01;
     camera.far = 200;
-    camera.lookAt(0, cameraHeight, 0);
+    camera.lookAt(0, targetY, 0);
     camera.updateProjectionMatrix();
 
     if (controlsRef.current) {
-      controlsRef.current.target.set(0, cameraHeight, 0);
+      controlsRef.current.target.set(0, targetY, 0);
       controlsRef.current.minDistance = 0.5;
       controlsRef.current.maxDistance = 30;
       controlsRef.current.update();
     }
 
     scene.traverse((object) => {
-      if (object instanceof THREE.Mesh) {
-        object.castShadow = true;
-        object.receiveShadow = true;
-        const materials = Array.isArray(object.material)
-          ? object.material
-          : [object.material];
-        materials.forEach((material) => {
-          if (material) material.side = THREE.DoubleSide;
-        });
-      }
+      if (!(object instanceof THREE.Mesh)) return;
+      object.castShadow = true;
+      object.receiveShadow = true;
+
+      const materials = Array.isArray(object.material)
+        ? object.material
+        : [object.material];
+
+      materials.forEach((material) => {
+        if (material) material.side = THREE.DoubleSide;
+      });
     });
 
     invalidate();
@@ -184,13 +218,11 @@ export function Interactive3DExperience() {
     <ModelErrorBoundary>
       <div
         id="3d-space"
-        className="h-screen w-full overflow-hidden bg-[#f4f1eb]"
+        className="relative h-screen w-full overflow-hidden bg-[#f4f1eb]"
         aria-label="Interactive 3D interior render"
       >
         <Canvas
           camera={{ position: [6, 3, 6], fov: 55, near: 0.01, far: 200 }}
-          // Always render while debugging/loading a large GLB. Demand rendering
-          // can leave the canvas black before the model has triggered an invalidation.
           dpr={[1, 1.5]}
           shadows
           gl={{
