@@ -1,3 +1,9 @@
+public/models/interior-room.glb
+
+public/models/*.glb
+public/models/*.gltf
+public/models/*.bin
+
 # Logs
 logs
 *.log

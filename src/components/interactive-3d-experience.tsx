@@ -1,36 +1,286 @@
 import { Minus, Plus } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import {
+  Environment,
+  OrbitControls,
+  useGLTF,
+  useProgress,
+} from "@react-three/drei";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import * as THREE from "three";
 import { Button } from "./ui/button";
 
 export const roomCameraPositions = {
-  living: { position: [0, 1.6, 4], target: [0, 1.4, 0] },
-  dining: { position: [3, 1.6, 2], target: [0, 1.3, 0] },
-  kitchen: { position: [-2, 1.6, 3], target: [0, 1.4, -1] },
-  bedroom: { position: [1, 1.6, 4], target: [0, 1.2, 0] },
+  living: {
+    position: [0, 1.6, 4],
+    target: [0, 1.4, 0],
+  },
+  dining: {
+    position: [3, 1.6, 2],
+    target: [0, 1.3, 0],
+  },
+  kitchen: {
+    position: [-2, 1.6, 3],
+    target: [0, 1.4, -1],
+  },
+  bedroom: {
+    position: [1, 1.6, 4],
+    target: [0, 1.2, 0],
+  },
 } satisfies Record<string, { position: number[]; target: number[] }>;
 
-export const materialOptions = { floor: ["Marble", "Wood", "Stone"], wall: ["Warm", "Neutral", "Textured"], lighting: ["Day", "Evening"] };
+export const materialOptions = {
+  floor: ["Marble", "Wood", "Stone"],
+  wall: ["Warm", "Neutral", "Textured"],
+  lighting: ["Day", "Evening"],
+};
 
-export function Interactive3DExperience({ compact = false }: { compact?: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
-  const [entered, setEntered] = useState(false);
-  const [room, setRoom] = useState("living");
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { setReady(true); observer.disconnect(); } }, { rootMargin: "300px" });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-  return <div ref={ref} id="3d-space" className={`relative overflow-hidden border border-warm-white/15 bg-secondary-charcoal text-warm-white ${compact ? "h-[72vh] min-h-[520px]" : "h-[78vh] min-h-[620px] max-h-[920px]"}`} aria-label="Interactive 3D model placeholder">
-    <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(var(--color-warm-white)/.08_1px,transparent_1px),linear-gradient(90deg,var(--color-warm-white)/.08_1px,transparent_1px)] [background-size:80px_80px]" />
-    <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
-      {!ready ? <p className="editorial-label text-gold">Preparing experience…</p> : !entered ? <div><div className="font-display text-6xl">Un<span className="text-gold">I</span></div><p className="editorial-label mt-5 text-gold">Entering the space</p><div className="mx-auto mt-5 h-px w-52 bg-warm-white/20"><div className="h-full w-2/3 bg-gold" /></div><Button variant="inverse" className="mt-9" onClick={() => setEntered(true)}>Enter space <span aria-hidden>→</span></Button></div> : <div><p className="editorial-label text-gold">3D Experience</p><h3 className="mt-5 font-display text-5xl">Model placeholder</h3><p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-warm-white/55">Your interactive architectural space will appear here when the GLB or GLTF model is supplied.</p></div>}
+function LoadingScreen() {
+  const { progress } = useProgress();
+
+  return (
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-secondary-charcoal">
+      <div className="text-center">
+        <p className="editorial-label text-gold">
+          Loading architectural space
+        </p>
+
+        <div className="mx-auto mt-5 h-px w-52 bg-warm-white/20">
+          <div
+            className="h-full bg-gold transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <p className="mt-3 text-xs text-warm-white/50">
+          {Math.round(progress)}%
+        </p>
+      </div>
     </div>
-    <div className="absolute left-5 top-5 editorial-label text-warm-white/50">Drag<br />Look around</div>
-    <div className="absolute right-5 top-5 flex flex-col items-end gap-2"><span className="editorial-label mb-2 text-warm-white/45">Room</span>{Object.keys(roomCameraPositions).map((item) => <button key={item} onClick={() => setRoom(item)} className={`editorial-label transition-colors ${room === item ? "text-gold" : "text-warm-white/50 hover:text-warm-white"}`}>{item}</button>)}</div>
-    <div className="absolute bottom-5 right-5 flex gap-2"><Button variant="ghost" size="icon" aria-label="Zoom in" className="border border-warm-white/20 text-warm-white"><Plus /></Button><Button variant="ghost" size="icon" aria-label="Zoom out" className="border border-warm-white/20 text-warm-white"><Minus /></Button></div>
-    <p className="absolute bottom-5 left-5 max-w-52 text-[10px] uppercase leading-5 tracking-[0.12em] text-warm-white/35">Model-ready · WebGL fallback supported</p>
-  </div>;
+  );
+}
+
+function InteriorModel() {
+  const { scene } = useGLTF("/models/interior-room.glb");
+
+  return (
+    <primitive
+      object={scene}
+      scale={1}
+      position={[0, 0, 0]}
+    />
+  );
+}
+
+useGLTF.preload("/models/interior-room.glb");
+
+function CameraController({
+  room,
+  controlsRef,
+}: {
+  room: keyof typeof roomCameraPositions;
+  controlsRef: React.RefObject<OrbitControlsImpl | null>;
+}) {
+  const targetPosition = new THREE.Vector3(
+    ...roomCameraPositions[room].position,
+  );
+
+  const targetLookAt = new THREE.Vector3(
+    ...roomCameraPositions[room].target,
+  );
+
+  useFrame(({ camera }) => {
+    camera.position.lerp(targetPosition, 0.04);
+
+    if (controlsRef.current) {
+      controlsRef.current.target.lerp(targetLookAt, 0.04);
+      controlsRef.current.update();
+    }
+  });
+
+  return null;
+}
+
+export function Interactive3DExperience({
+  compact = false,
+}: {
+  compact?: boolean;
+}) {
+  const [entered, setEntered] = useState(false);
+  const [room, setRoom] =
+    useState<keyof typeof roomCameraPositions>("living");
+
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
+
+  const handleZoom = (direction: "in" | "out") => {
+    const controls = controlsRef.current;
+
+    if (!controls) return;
+
+    const camera = controls.object;
+
+    const directionVector = new THREE.Vector3();
+
+    camera.getWorldDirection(directionVector);
+
+    const distance = direction === "in" ? 0.5 : -0.5;
+
+    camera.position.addScaledVector(directionVector, distance);
+
+    controls.update();
+  };
+
+  return (
+    <div
+      id="3d-space"
+      className={`relative overflow-hidden border border-warm-white/15 bg-secondary-charcoal text-warm-white ${
+        compact
+          ? "h-[72vh] min-h-[520px]"
+          : "h-[78vh] min-h-[620px] max-h-[920px]"
+      }`}
+      aria-label="Interactive 3D architectural space"
+    >
+      {!entered ? (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-secondary-charcoal">
+          <div className="text-center">
+            <div className="font-display text-6xl">
+              Un<span className="text-gold">I</span>
+            </div>
+
+            <p className="editorial-label mt-5 text-gold">
+              Entering the space
+            </p>
+
+            <div className="mx-auto mt-5 h-px w-52 bg-warm-white/20">
+              <div className="h-full w-2/3 bg-gold" />
+            </div>
+
+            <Button
+              variant="inverse"
+              className="mt-9"
+              onClick={() => setEntered(true)}
+            >
+              Enter space <span aria-hidden>→</span>
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      <Canvas
+        camera={{
+          position: roomCameraPositions.living.position as [
+            number,
+            number,
+            number,
+          ],
+          fov: 45,
+          near: 0.1,
+          far: 1000,
+        }}
+        dpr={[1, 2]}
+        gl={{
+          antialias: true,
+          alpha: true,
+        }}
+      >
+        <Suspense fallback={null}>
+          <ambientLight intensity={1.2} />
+
+          <directionalLight
+            position={[5, 8, 5]}
+            intensity={2}
+          />
+
+          <Environment preset="apartment" />
+
+          <InteriorModel />
+
+          <CameraController
+            room={room}
+            controlsRef={controlsRef}
+          />
+
+          <OrbitControls
+            ref={controlsRef}
+            enablePan={false}
+            enableDamping
+            dampingFactor={0.08}
+            minDistance={1}
+            maxDistance={10}
+            minPolarAngle={Math.PI * 0.15}
+            maxPolarAngle={Math.PI * 0.85}
+          />
+        </Suspense>
+      </Canvas>
+
+      {entered && (
+        <>
+          <Suspense fallback={<LoadingScreen />}>
+            <div />
+          </Suspense>
+
+          {/* Instructions */}
+          <div className="pointer-events-none absolute left-5 top-5 z-10 editorial-label text-warm-white/60">
+            Drag
+            <br />
+            Look around
+          </div>
+
+          {/* Room Navigation */}
+          <div className="absolute right-5 top-5 z-10 flex flex-col items-end gap-2">
+            <span className="editorial-label mb-2 text-warm-white/45">
+              Room
+            </span>
+
+            {Object.keys(roomCameraPositions).map((item) => (
+              <button
+                key={item}
+                onClick={() =>
+                  setRoom(
+                    item as keyof typeof roomCameraPositions,
+                  )
+                }
+                className={`editorial-label capitalize transition-colors ${
+                  room === item
+                    ? "text-gold"
+                    : "text-warm-white/50 hover:text-warm-white"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+
+          {/* Zoom Controls */}
+          <div className="absolute bottom-5 right-5 z-10 flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Zoom in"
+              onClick={() => handleZoom("in")}
+              className="border border-warm-white/20 text-warm-white"
+            >
+              <Plus />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Zoom out"
+              onClick={() => handleZoom("out")}
+              className="border border-warm-white/20 text-warm-white"
+            >
+              <Minus />
+            </Button>
+          </div>
+
+          {/* Footer Label */}
+          <p className="absolute bottom-5 left-5 z-10 max-w-52 text-[10px] uppercase leading-5 tracking-[0.12em] text-warm-white/35">
+            Interactive architectural experience · WebGL
+          </p>
+        </>
+      )}
+    </div>
+  );
 }
