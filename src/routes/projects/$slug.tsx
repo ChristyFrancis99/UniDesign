@@ -13,7 +13,18 @@ const projectData: Record<string, { title: string; type: string; description: st
 
 function ProjectPage() {
   const { slug } = Route.useParams();
-  const project = projectData[slug] ?? projectData.mudra;
+  const project = projectData[slug];
+
+  if (!project) {
+    return (
+      <div className="content-shell flex min-h-[70vh] flex-col justify-center py-28 md:py-40">
+        <p className="editorial-label text-gold">404 — Project not found</p>
+        <h1 className="mt-7 display-xl">THIS PROJECT DOESN'T EXIST.</h1>
+        <p className="mt-7 max-w-xl leading-8 text-muted-foreground">The project you are looking for may have moved or may not be part of the current portfolio.</p>
+        <Link to="/projects" className="mt-10 inline-block editorial-label text-gold">← Explore all projects</Link>
+      </div>
+    );
+  }
 
   return (
     <div>
