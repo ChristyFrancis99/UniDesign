@@ -14,6 +14,8 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ProjectsIndexRouteImport } from './routes/projects/index'
 import { Route as ProjectsSlugRouteImport } from './routes/projects/$slug'
+import { Route as ServicesRouteImport } from './routes/services'
+import { Route as ThreeDExperienceRouteImport } from './routes/3d-experience'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +42,16 @@ const ProjectsSlugRoute = ProjectsSlugRouteImport.update({
   path: '/projects/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServicesRoute = ServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ThreeDExperienceRoute = ThreeDExperienceRouteImport.update({
+  id: '/3d-experience',
+  path: '/3d-experience',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +59,8 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/services': typeof ServicesRoute
+  '/3d-experience': typeof ThreeDExperienceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +68,8 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/projects': typeof ProjectsIndexRoute
+  '/services': typeof ServicesRoute
+  '/3d-experience': typeof ThreeDExperienceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,14 +78,16 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/services': typeof ServicesRoute
+  '/3d-experience': typeof ThreeDExperienceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/contact' | '/projects/$slug' | '/projects/'
+  fullPaths: '/' | '/about' | '/contact' | '/projects/$slug' | '/projects/' | '/services' | '/3d-experience'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/contact' | '/projects/$slug' | '/projects'
+  to: '/' | '/about' | '/contact' | '/projects/$slug' | '/projects' | '/services' | '/3d-experience'
   id:
-    '__root__' | '/' | '/about' | '/contact' | '/projects/$slug' | '/projects/'
+    '__root__' | '/' | '/about' | '/contact' | '/projects/$slug' | '/projects/' | '/services' | '/3d-experience'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,6 +96,8 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   ProjectsSlugRoute: typeof ProjectsSlugRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
+  ServicesRoute: typeof ServicesRoute
+  ThreeDExperienceRoute: typeof ThreeDExperienceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -117,6 +137,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/services': {
+      id: '/services'
+      path: '/services'
+      fullPath: '/services'
+      preLoaderRoute: typeof ServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/3d-experience': {
+      id: '/3d-experience'
+      path: '/3d-experience'
+      fullPath: '/3d-experience'
+      preLoaderRoute: typeof ThreeDExperienceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -126,6 +160,8 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   ProjectsSlugRoute: ProjectsSlugRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
+  ServicesRoute: ServicesRoute,
+  ThreeDExperienceRoute: ThreeDExperienceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
