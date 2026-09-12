@@ -19,6 +19,8 @@
  */
 
 @theme inline {
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Manrope", Arial, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -59,29 +61,37 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-gold: var(--gold);
+  --color-muted-gold: var(--muted-gold);
+  --color-warm-white: var(--warm-white);
+  --color-secondary-charcoal: var(--secondary-charcoal);
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 0.125rem;
+  --warm-white: oklch(0.973 0.007 91.5);
+  --secondary-charcoal: oklch(0.273 0 0);
+  --gold: oklch(0.79 0.155 91.5);
+  --muted-gold: oklch(0.73 0.125 89);
+  --background: var(--warm-white);
+  --foreground: oklch(0.205 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: var(--warm-white);
   --secondary: oklch(0.968 0.007 247.896);
   --secondary-foreground: oklch(0.208 0.042 265.755);
   --muted: oklch(0.968 0.007 247.896);
   --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --accent: var(--gold);
+  --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --border: oklch(0.88 0.006 91.5);
+  --input: oklch(0.88 0.006 91.5);
+  --ring: var(--gold);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -140,5 +150,36 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
   }
+
+  h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; }
+  ::selection { background: var(--gold); color: var(--foreground); }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+}
+
+@keyframes hero-reveal { from { clip-path: inset(0 100% 0 0); transform: scale(1.03); } to { clip-path: inset(0); transform: scale(1); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes nav-in { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes line-down { 0% { transform: scaleY(0); transform-origin: top; } 45% { transform: scaleY(1); transform-origin: top; } 55% { transform: scaleY(1); transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+
+@utility content-shell { width: min(90vw, 1440px); margin-inline: auto; }
+@utility editorial-label { font-size: 0.6875rem; line-height: 1.4; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; }
+@utility display-xl { font-family: var(--font-display); font-size: clamp(3rem, 6.5vw, 6rem); line-height: 0.88; letter-spacing: 0; }
+@utility display-lg { font-family: var(--font-display); font-size: clamp(2.4rem, 4.5vw, 4rem); line-height: 0.95; letter-spacing: 0; }
+@utility text-balance { text-wrap: balance; }
+@utility hero-reveal { animation: hero-reveal 1.4s cubic-bezier(.77,0,.18,1) both; }
+@utility rise-in { animation: rise-in .9s cubic-bezier(.2,.7,.2,1) both; }
+@utility nav-in { animation: nav-in .8s ease-out .4s both; }
+@utility line-down { animation: line-down 2.5s ease-in-out infinite; }
+
+html { scroll-behavior: smooth; }
+
+@media (max-width: 767px) {
+  @utility content-shell { width: calc(100% - 40px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
