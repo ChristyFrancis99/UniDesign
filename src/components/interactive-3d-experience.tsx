@@ -1,12 +1,7 @@
-import { Component, Suspense, useEffect, useRef } from "react";
+import { Component, Fragment, Suspense, useEffect, useRef, useState } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import {
-  Html,
-  OrbitControls,
-  useGLTF,
-  useProgress,
-} from "@react-three/drei";
+import { Html, OrbitControls, useGLTF, useProgress } from "@react-three/drei";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
@@ -94,6 +89,7 @@ function InteriorModel() {
   const groupRef = useRef<THREE.Group>(null);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const { camera, invalidate } = useThree();
+  const [modelError, setModelError] = useState<string | null>(null);
 
   useEffect(() => {
     const group = groupRef.current;
@@ -107,11 +103,14 @@ function InteriorModel() {
 
     const maxDimension = Math.max(size.x, size.y, size.z);
     if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
-      throw new Error("The GLB contains no visible geometry.");
+      setModelError("The GLB contains no visible geometry.");
+      return;
     }
 
-    // Normalize the model to a predictable size so exports with very large
-    // or very small world units always fit the camera.
+    setModelError(null);
+
+    // Normalize the export so models saved in centimeters, meters, or very
+    // large Blender units all fit the same camera reliably.
     const targetSize = 8;
     const scale = targetSize / maxDimension;
 
@@ -148,9 +147,15 @@ function InteriorModel() {
     invalidate();
   }, [camera, invalidate, scene]);
 
+  if (modelError) {
+    return <Html fullscreen>{/* handled by the page-level fallback */}</Html>;
+  }
+
   return (
-    <group ref={groupRef}>
-      <primitive object={scene} />
+    <Fragment>
+      <group ref={groupRef}>
+        <primitive object={scene} />
+      </group>
       <OrbitControls
         ref={controlsRef}
         makeDefault
@@ -161,7 +166,7 @@ function InteriorModel() {
         minPolarAngle={0.05}
         maxPolarAngle={Math.PI - 0.05}
       />
-    </group>
+    </Fragment>
   );
 }
 
@@ -191,9 +196,7 @@ export function Interactive3DExperience() {
         >
           <color attach="background" args={["#f4f1eb"]} />
 
-          <hemisphereLight
-            args={["#fffdf8", "#6f685d", 2.2]}
-          />
+          <hemisphereLight args={["#fffdf8", "#6f685d", 2.2]} />
           <ambientLight intensity={1.25} />
           <directionalLight
             castShadow
