@@ -37,20 +37,22 @@ function LoadingScreen() {
 
 function ModelLoadError({ message }: { message: string }) {
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-[#f4f1eb] px-6 text-[#242424]">
-      <div className="max-w-xl text-center">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b99b4b]">
-          3D render unavailable
-        </p>
-        <h1 className="mt-4 text-2xl font-medium tracking-tight">
-          The interior model could not be loaded.
-        </h1>
-        <p className="mt-4 text-sm leading-6 text-black/55">{message}</p>
-        <p className="mt-5 break-all font-mono text-[11px] text-black/35">
-          {MODEL_URL}
-        </p>
+    <Html fullscreen>
+      <div className="flex h-full w-full items-center justify-center bg-[#f4f1eb] px-6 text-[#242424]">
+        <div className="max-w-xl text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b99b4b]">
+            3D render unavailable
+          </p>
+          <h1 className="mt-4 text-2xl font-medium tracking-tight">
+            The interior model could not be displayed.
+          </h1>
+          <p className="mt-4 text-sm leading-6 text-black/55">{message}</p>
+          <p className="mt-5 break-all font-mono text-[11px] text-black/35">
+            {MODEL_URL}
+          </p>
+        </div>
       </div>
-    </div>
+    </Html>
   );
 }
 
@@ -70,14 +72,7 @@ class ModelErrorBoundary extends Component<
 
   render() {
     if (this.state.error) {
-      return (
-        <ModelLoadError
-          message={
-            this.state.error.message ||
-            "Check that the GLB exists and that VITE_INTERIOR_MODEL_URL points to a reachable file."
-          }
-        />
-      );
+      return <ModelLoadError message={this.state.error.message || "The 3D viewer failed to render."} />;
     }
     return this.props.children;
   }
@@ -86,50 +81,42 @@ class ModelErrorBoundary extends Component<
 function getVisibleModelBounds(scene: THREE.Object3D) {
   const box = new THREE.Box3();
   const meshBox = new THREE.Box3();
-  const position = new THREE.Vector3();
+  const center = new THREE.Vector3();
 
   scene.updateMatrixWorld(true);
 
   scene.traverse((object) => {
     if (!(object instanceof THREE.Mesh) || !object.visible || !object.geometry) return;
 
-    const geometry = object.geometry;
-    if (!geometry.boundingBox) geometry.computeBoundingBox();
-    if (!geometry.boundingBox) return;
+    const name = object.name.toLowerCase();
+    // Only hide actual background meshes. Never hide parent/group nodes because
+    // a parent named "360" or "panorama" can contain the entire interior.
+    if (name.includes("panorama") || name.includes("sendai") || name.includes("360")) {
+      object.visible = false;
+      return;
+    }
 
-    meshBox.copy(geometry.boundingBox).applyMatrix4(object.matrixWorld);
+    if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
+    if (!object.geometry.boundingBox) return;
+
+    meshBox.copy(object.geometry.boundingBox).applyMatrix4(object.matrixWorld);
     box.union(meshBox);
   });
 
   if (box.isEmpty()) return null;
-  box.getCenter(position);
-  return { box, center: position };
+  box.getCenter(center);
+  return { box, center };
 }
 
 function InteriorModel() {
   const { scene } = useGLTF(MODEL_URL);
-  const groupRef = useRef<THREE.Group>(null);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const { camera, invalidate } = useThree();
   const [modelError, setModelError] = useState<string | null>(null);
 
   useEffect(() => {
-    const group = groupRef.current;
-    if (!group) return;
-
-    // The supplied GLB contains a large panorama/background scene. Hide only
-    // those known background objects before calculating the interior bounds.
-    scene.traverse((object) => {
-      const name = object.name.toLowerCase();
-      if (name.includes("panorama") || name.includes("sendai") || name.includes("360")) {
-        object.visible = false;
-      }
-    });
-
-    // IMPORTANT: Box3.setFromObject(scene) can still include hidden panorama
-    // geometry. Build the bounds from visible meshes only so the room is not
-    // scaled down to an invisible point.
     const bounds = getVisibleModelBounds(scene);
+
     if (!bounds) {
       setModelError("The GLB contains no visible interior geometry.");
       return;
@@ -140,29 +127,30 @@ function InteriorModel() {
     const maxDimension = Math.max(size.x, size.y, size.z);
 
     if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
-      setModelError("The GLB contains invalid interior geometry bounds.");
+      setModelError("The GLB contains invalid geometry bounds.");
       return;
     }
 
     setModelError(null);
 
-    // Normalize only the actual visible interior into a predictable volume.
+    // Work directly on the loaded scene. This avoids applying a second
+    // transform wrapper around a GLTF scene that may already have transforms.
     const targetSize = 8;
     const scale = targetSize / maxDimension;
-    group.scale.setScalar(scale);
-    group.position.set(
+    scene.scale.setScalar(scale);
+    scene.position.set(
       -bounds.center.x * scale,
       -bounds.center.y * scale,
       -bounds.center.z * scale,
     );
+    scene.updateMatrixWorld(true);
 
     const normalizedSize = size.clone().multiplyScalar(scale);
     const normalizedHeight = Math.max(normalizedSize.y, 2);
-    const eyeHeight = Math.max(0.35, normalizedHeight * 0.38);
-    const targetY = -normalizedHeight / 2 + eyeHeight;
-    const distance = Math.max(normalizedSize.x, normalizedSize.z, 4) * 0.8;
+    const targetY = -normalizedHeight / 2 + normalizedHeight * 0.38;
+    const distance = Math.max(normalizedSize.x, normalizedSize.z, 4) * 0.85;
 
-    camera.position.set(distance, targetY + normalizedHeight * 0.08, distance);
+    camera.position.set(distance, targetY + normalizedHeight * 0.12, distance);
     camera.near = 0.01;
     camera.far = 200;
     camera.lookAt(0, targetY, 0);
@@ -180,10 +168,7 @@ function InteriorModel() {
       object.castShadow = true;
       object.receiveShadow = true;
 
-      const materials = Array.isArray(object.material)
-        ? object.material
-        : [object.material];
-
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
       materials.forEach((material) => {
         if (material) material.side = THREE.DoubleSide;
       });
@@ -196,9 +181,7 @@ function InteriorModel() {
 
   return (
     <Fragment>
-      <group ref={groupRef}>
-        <primitive object={scene} />
-      </group>
+      <primitive object={scene} />
       <OrbitControls
         ref={controlsRef}
         makeDefault
