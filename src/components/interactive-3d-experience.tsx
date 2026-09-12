@@ -72,7 +72,11 @@ class ModelErrorBoundary extends Component<
 
   render() {
     if (this.state.error) {
-      return <ModelLoadError message={this.state.error.message || "The 3D viewer failed to render."} />;
+      return (
+        <ModelLoadError
+          message={this.state.error.message || "The 3D viewer failed to render."}
+        />
+      );
     }
     return this.props.children;
   }
@@ -81,6 +85,8 @@ class ModelErrorBoundary extends Component<
 function getVisibleModelBounds(scene: THREE.Object3D) {
   const box = new THREE.Box3();
   const meshBox = new THREE.Box3();
+  const meshCenter = new THREE.Vector3();
+  const meshSize = new THREE.Vector3();
   const center = new THREE.Vector3();
 
   scene.updateMatrixWorld(true);
@@ -89,8 +95,6 @@ function getVisibleModelBounds(scene: THREE.Object3D) {
     if (!(object instanceof THREE.Mesh) || !object.visible || !object.geometry) return;
 
     const name = object.name.toLowerCase();
-    // Only hide actual background meshes. Never hide parent/group nodes because
-    // a parent named "360" or "panorama" can contain the entire interior.
     if (name.includes("panorama") || name.includes("sendai") || name.includes("360")) {
       object.visible = false;
       return;
@@ -100,6 +104,21 @@ function getVisibleModelBounds(scene: THREE.Object3D) {
     if (!object.geometry.boundingBox) return;
 
     meshBox.copy(object.geometry.boundingBox).applyMatrix4(object.matrixWorld);
+    meshBox.getCenter(meshCenter);
+    meshBox.getSize(meshSize);
+
+    // The GLB contains several unrelated imported assets with transforms
+    // hundreds/thousands of units away from the actual room. They were making
+    // the old bounding box enormous, which reduced the room to an invisible
+    // speck. Keep geometry that belongs to the main room-sized scene and hide
+    // obvious outliers before calculating the camera frame.
+    const centerDistance = meshCenter.length();
+    const maxDimension = Math.max(meshSize.x, meshSize.y, meshSize.z);
+    if (centerDistance > 20 || maxDimension > 20) {
+      object.visible = false;
+      return;
+    }
+
     box.union(meshBox);
   });
 
@@ -133,8 +152,6 @@ function InteriorModel() {
 
     setModelError(null);
 
-    // Work directly on the loaded scene. This avoids applying a second
-    // transform wrapper around a GLTF scene that may already have transforms.
     const targetSize = 8;
     const scale = targetSize / maxDimension;
     scene.scale.setScalar(scale);
@@ -168,7 +185,9 @@ function InteriorModel() {
       object.castShadow = true;
       object.receiveShadow = true;
 
-      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      const materials = Array.isArray(object.material)
+        ? object.material
+        : [object.material];
       materials.forEach((material) => {
         if (material) material.side = THREE.DoubleSide;
       });
