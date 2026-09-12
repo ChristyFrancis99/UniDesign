@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import type { CSSProperties } from "react";
 
 export const Route = createFileRoute("/3d-experience")({ component: ThreeDExperiencePage });
 
@@ -17,7 +18,7 @@ function ThreeDExperiencePage() {
           <div className="absolute left-6 top-6 editorial-label text-warm-white/60">3D MODEL / PLACEHOLDER</div>
           <div className="relative flex min-h-[55vh] items-center justify-center p-8 text-center">
             <div>
-              <div className="mx-auto mb-7 h-20 w-20 border border-gold/60 rotate-45 transition-transform duration-700 hover:rotate-[135deg]" aria-hidden />
+              <div className="mx-auto mb-7 h-20 w-20 rotate-45 border border-gold/60 transition-transform duration-700 hover:rotate-[135deg]" aria-hidden />
               <p className="font-display text-3xl text-warm-white md:text-5xl">Your 3D model goes here.</p>
               <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-warm-white/55">Replace this placeholder with the WebGL / Three.js / embedded model experience when your final asset is ready.</p>
             </div>
@@ -26,7 +27,7 @@ function ThreeDExperiencePage() {
 
         <div className="mt-12 grid gap-8 border-t border-border pt-10 md:grid-cols-3 motion-stagger">
           {["Orbit the space", "Explore materials", "Understand the light"].map((item, index) => (
-            <div key={item} className="motion-reveal" style={{ "--motion-index": index } as React.CSSProperties}>
+            <div key={item} className="motion-reveal" style={{ "--motion-index": index } as CSSProperties}>
               <span className="editorial-label text-gold">0{index + 1}</span>
               <h2 className="mt-4 font-display text-3xl">{item}</h2>
             </div>
