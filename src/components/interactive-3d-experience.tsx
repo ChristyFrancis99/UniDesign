@@ -1,8 +1,14 @@
 import { Component, Suspense, useEffect, useRef } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Html, OrbitControls, useGLTF, useProgress } from "@react-three/drei";
+import {
+  Html,
+  OrbitControls,
+  useGLTF,
+  useProgress,
+} from "@react-three/drei";
 import * as THREE from "three";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 const MODEL_URL =
   import.meta.env.VITE_INTERIOR_MODEL_URL?.trim() ||
@@ -10,22 +16,23 @@ const MODEL_URL =
 
 function LoadingScreen() {
   const { progress } = useProgress();
+  const percentage = Math.min(100, Math.max(0, progress));
 
   return (
     <Html fullscreen>
-      <div className="flex h-full w-full items-center justify-center bg-[#252525] text-white">
-        <div className="w-64 text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#d4af37]">
+      <div className="flex h-full w-full items-center justify-center bg-[#f4f1eb] text-[#242424]">
+        <div className="w-[min(320px,80vw)] text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em]">
             Loading render
           </p>
-          <div className="mx-auto mt-5 h-px w-full bg-white/15">
+          <div className="mt-5 h-px w-full bg-black/10">
             <div
-              className="h-full bg-[#d4af37] transition-all duration-300"
-              style={{ width: `${Math.max(3, progress)}%` }}
+              className="h-full bg-[#b99b4b] transition-[width] duration-200"
+              style={{ width: `${percentage}%` }}
             />
           </div>
-          <p className="mt-3 text-xs text-white/50">
-            {Math.round(progress)}%
+          <p className="mt-3 text-[11px] tracking-[0.12em] text-black/45">
+            {Math.round(percentage)}%
           </p>
         </div>
       </div>
@@ -33,52 +40,24 @@ function LoadingScreen() {
   );
 }
 
-function InteriorModel() {
-  const { scene } = useGLTF(MODEL_URL);
-  const { camera } = useThree();
-  const controlsRef = useRef<any>(null);
-
-  useEffect(() => {
-    const box = new THREE.Box3().setFromObject(scene);
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const maxDimension = Math.max(size.x, size.y, size.z);
-
-    if (!Number.isFinite(maxDimension) || maxDimension <= 0) return;
-
-    // Center the render at the origin so the camera can always find it.
-    scene.position.sub(center);
-
-    const distance = maxDimension * 1.35;
-    camera.position.set(distance * 0.85, distance * 0.55, distance);
-    camera.near = Math.max(maxDimension / 10000, 0.001);
-    camera.far = Math.max(maxDimension * 100, 1000);
-    camera.lookAt(0, 0, 0);
-    camera.updateProjectionMatrix();
-
-    if (controlsRef.current) {
-      controlsRef.current.target.set(0, 0, 0);
-      controlsRef.current.update();
-    }
-  }, [camera, scene]);
-
+function ModelLoadError({ message }: { message: string }) {
   return (
-    <>
-      <primitive object={scene} />
-      <OrbitControls
-        ref={controlsRef}
-        makeDefault
-        enableDamping
-        dampingFactor={0.08}
-        enablePan
-        minDistance={0.01}
-        maxDistance={100000}
-      />
-    </>
+    <div className="flex h-screen w-full items-center justify-center bg-[#f4f1eb] px-6 text-[#242424]">
+      <div className="max-w-xl text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b99b4b]">
+          3D render unavailable
+        </p>
+        <h1 className="mt-4 text-2xl font-medium tracking-tight">
+          The interior model could not be loaded.
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-black/55">{message}</p>
+        <p className="mt-5 break-all font-mono text-[11px] text-black/35">
+          {MODEL_URL}
+        </p>
+      </div>
+    </div>
   );
 }
-
-useGLTF.preload(MODEL_URL);
 
 class ModelErrorBoundary extends Component<
   { children: ReactNode },
@@ -91,27 +70,18 @@ class ModelErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("3D model failed to render:", error, info);
+    console.error("3D interior render failed", error, info);
   }
 
   render() {
     if (this.state.error) {
       return (
-        <div className="flex h-screen w-full items-center justify-center bg-[#252525] px-6 text-white">
-          <div className="max-w-xl text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#d4af37]">
-              Render could not load
-            </p>
-            <p className="mt-5 text-sm leading-7 text-white/60">
-              The 3D file could not be opened by the browser. Check that
-              public/models/interior-room.glb exists and that the file is a
-              valid GLB.
-            </p>
-            <p className="mt-4 break-all text-xs text-white/35">
-              {this.state.error.message}
-            </p>
-          </div>
-        </div>
+        <ModelLoadError
+          message={
+            this.state.error.message ||
+            "Check that the GLB exists and that VITE_INTERIOR_MODEL_URL points to a reachable file."
+          }
+        />
       );
     }
 
@@ -119,29 +89,127 @@ class ModelErrorBoundary extends Component<
   }
 }
 
+function InteriorModel() {
+  const { scene } = useGLTF(MODEL_URL);
+  const groupRef = useRef<THREE.Group>(null);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
+  const { camera, invalidate } = useThree();
+
+  useEffect(() => {
+    const group = groupRef.current;
+    if (!group) return;
+
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+
+    const maxDimension = Math.max(size.x, size.y, size.z);
+    if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
+      throw new Error("The GLB contains no visible geometry.");
+    }
+
+    // Normalize the model to a predictable size so exports with very large
+    // or very small world units always fit the camera.
+    const targetSize = 8;
+    const scale = targetSize / maxDimension;
+
+    group.scale.setScalar(scale);
+    group.position.set(
+      -center.x * scale,
+      -center.y * scale,
+      -center.z * scale,
+    );
+
+    const normalizedSize = maxDimension * scale;
+    const distance = Math.max(6, normalizedSize * 1.35);
+
+    camera.position.set(distance * 0.72, distance * 0.48, distance * 0.72);
+    camera.near = 0.01;
+    camera.far = Math.max(100, distance * 20);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+
+    if (controlsRef.current) {
+      controlsRef.current.target.set(0, 0, 0);
+      controlsRef.current.minDistance = normalizedSize * 0.35;
+      controlsRef.current.maxDistance = normalizedSize * 6;
+      controlsRef.current.update();
+    }
+
+    scene.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
+
+    invalidate();
+  }, [camera, invalidate, scene]);
+
+  return (
+    <group ref={groupRef}>
+      <primitive object={scene} />
+      <OrbitControls
+        ref={controlsRef}
+        makeDefault
+        enableDamping
+        dampingFactor={0.08}
+        enablePan
+        screenSpacePanning
+        minPolarAngle={0.05}
+        maxPolarAngle={Math.PI - 0.05}
+      />
+    </group>
+  );
+}
+
+useGLTF.preload(MODEL_URL);
+
 export function Interactive3DExperience() {
   return (
-    <div
-      id="3d-space"
-      className="fixed inset-0 h-screen w-screen overflow-hidden bg-[#252525]"
-      aria-label="Interactive 3D interior render"
-    >
-      <Canvas
-        camera={{ position: [5, 3, 7], fov: 45, near: 0.01, far: 10000 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true, alpha: false }}
-        shadows
+    <ModelErrorBoundary>
+      <div
+        id="3d-space"
+        className="h-screen w-full overflow-hidden bg-[#f4f1eb]"
+        aria-label="Interactive 3D interior render"
       >
-        <Suspense fallback={<LoadingScreen />}>
-          <ambientLight intensity={2} />
-          <hemisphereLight intensity={1.5} groundColor="#222222" />
-          <directionalLight position={[5, 10, 5]} intensity={3} />
-          <directionalLight position={[-5, 5, -5]} intensity={1.5} />
-          <ModelErrorBoundary>
+        <Canvas
+          camera={{ position: [6, 4, 6], fov: 42, near: 0.01, far: 1000 }}
+          dpr={[1, 1.75]}
+          shadows
+          gl={{
+            antialias: true,
+            alpha: false,
+            powerPreference: "high-performance",
+          }}
+          onCreated={({ gl }) => {
+            gl.toneMapping = THREE.ACESFilmicToneMapping;
+            gl.toneMappingExposure = 1.15;
+          }}
+        >
+          <color attach="background" args={["#f4f1eb"]} />
+
+          <hemisphereLight
+            args={["#fffdf8", "#6f685d", 2.2]}
+          />
+          <ambientLight intensity={1.25} />
+          <directionalLight
+            castShadow
+            position={[5, 10, 6]}
+            intensity={4}
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+          />
+          <directionalLight position={[-5, 4, -4]} intensity={1.8} />
+          <directionalLight position={[0, 2, 8]} intensity={1.2} />
+
+          <Suspense fallback={<LoadingScreen />}>
             <InteriorModel />
-          </ModelErrorBoundary>
-        </Suspense>
-      </Canvas>
-    </div>
+          </Suspense>
+        </Canvas>
+      </div>
+    </ModelErrorBoundary>
   );
 }
