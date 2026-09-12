@@ -95,6 +95,21 @@ function InteriorModel() {
     const group = groupRef.current;
     if (!group) return;
 
+    // The supplied Blender scene contains a large photographic panorama named
+    // "Sendai_City_Panorama...". It is a background asset, not part of the
+    // interior render, and its huge bounds previously pushed the camera far
+    // away from the actual bedroom. Hide it before calculating the room bounds.
+    scene.traverse((object) => {
+      const name = object.name.toLowerCase();
+      if (
+        name.includes("panorama") ||
+        name.includes("sendai") ||
+        name.includes("360")
+      ) {
+        object.visible = false;
+      }
+    });
+
     const box = new THREE.Box3().setFromObject(scene);
     const size = new THREE.Vector3();
     const center = new THREE.Vector3();
@@ -103,14 +118,13 @@ function InteriorModel() {
 
     const maxDimension = Math.max(size.x, size.y, size.z);
     if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
-      setModelError("The GLB contains no visible geometry.");
+      setModelError("The GLB contains no visible interior geometry.");
       return;
     }
 
     setModelError(null);
 
-    // Normalize the export so models saved in centimeters, meters, or very
-    // large Blender units all fit the same camera reliably.
+    // Normalize the room to a predictable size while preserving its proportions.
     const targetSize = 8;
     const scale = targetSize / maxDimension;
 
@@ -122,18 +136,21 @@ function InteriorModel() {
     );
 
     const normalizedSize = maxDimension * scale;
-    const distance = Math.max(6, normalizedSize * 1.35);
 
-    camera.position.set(distance * 0.72, distance * 0.48, distance * 0.72);
-    camera.near = 0.01;
-    camera.far = Math.max(100, distance * 20);
-    camera.lookAt(0, 0, 0);
+    // Start the camera INSIDE the room. An exterior camera can look directly
+    // into a wall/ceiling and produce an apparently black render.
+    const cameraHeight = Math.max(0.8, normalizedSize * 0.16);
+    const cameraOffset = Math.max(1.4, normalizedSize * 0.22);
+    camera.position.set(cameraOffset, cameraHeight, cameraOffset);
+    camera.near = 0.02;
+    camera.far = Math.max(100, normalizedSize * 8);
+    camera.lookAt(0, Math.max(0, normalizedSize * 0.03), 0);
     camera.updateProjectionMatrix();
 
     if (controlsRef.current) {
-      controlsRef.current.target.set(0, 0, 0);
-      controlsRef.current.minDistance = normalizedSize * 0.35;
-      controlsRef.current.maxDistance = normalizedSize * 6;
+      controlsRef.current.target.set(0, Math.max(0, normalizedSize * 0.03), 0);
+      controlsRef.current.minDistance = Math.max(0.25, normalizedSize * 0.04);
+      controlsRef.current.maxDistance = normalizedSize * 2.5;
       controlsRef.current.update();
     }
 
@@ -141,6 +158,17 @@ function InteriorModel() {
       if (object instanceof THREE.Mesh) {
         object.castShadow = true;
         object.receiveShadow = true;
+
+        // Interior walls and ceilings are often authored as single-sided
+        // surfaces. Double-sided rendering prevents them disappearing when
+        // viewed from inside the architectural model.
+        const materials = Array.isArray(object.material)
+          ? object.material
+          : [object.material];
+
+        materials.forEach((material) => {
+          if (material) material.side = THREE.DoubleSide;
+        });
       }
     });
 
@@ -181,7 +209,7 @@ export function Interactive3DExperience() {
         aria-label="Interactive 3D interior render"
       >
         <Canvas
-          camera={{ position: [6, 4, 6], fov: 42, near: 0.01, far: 1000 }}
+          camera={{ position: [2, 1.5, 2], fov: 55, near: 0.02, far: 100 }}
           dpr={[1, 1.75]}
           shadows
           gl={{
@@ -191,22 +219,22 @@ export function Interactive3DExperience() {
           }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
-            gl.toneMappingExposure = 1.15;
+            gl.toneMappingExposure = 1.25;
           }}
         >
           <color attach="background" args={["#f4f1eb"]} />
 
-          <hemisphereLight args={["#fffdf8", "#6f685d", 2.2]} />
-          <ambientLight intensity={1.25} />
+          <hemisphereLight args={["#fffdf8", "#5e574d", 2.6]} />
+          <ambientLight intensity={1.5} />
           <directionalLight
             castShadow
-            position={[5, 10, 6]}
-            intensity={4}
+            position={[4, 8, 5]}
+            intensity={4.5}
             shadow-mapSize-width={2048}
             shadow-mapSize-height={2048}
           />
-          <directionalLight position={[-5, 4, -4]} intensity={1.8} />
-          <directionalLight position={[0, 2, 8]} intensity={1.2} />
+          <directionalLight position={[-4, 4, -3]} intensity={2.2} />
+          <directionalLight position={[2, 3, 7]} intensity={1.5} />
 
           <Suspense fallback={<LoadingScreen />}>
             <InteriorModel />
