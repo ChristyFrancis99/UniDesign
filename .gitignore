@@ -1,6 +1,10 @@
-public/models/*.glb
+# Local / oversized 3D source exports
+public/models/interior-room-source.glb
 public/models/*.gltf
 public/models/*.bin
+
+# The optimized website GLB is intentionally trackable by GitHub.
+# Keep the original 100+ MB source export out of Git.
 
 # Logs
 logs
