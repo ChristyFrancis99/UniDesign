@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import type { CSSProperties } from "react";
 
 const services = [
   { number: "01", title: "Architecture", text: "Context-led architectural design from concept through considered documentation and execution." },
@@ -21,7 +22,7 @@ function ServicesPage() {
 
         <div className="mt-24 divide-y border-y border-border motion-stagger">
           {services.map((service, index) => (
-            <article key={service.number} className="motion-reveal group grid gap-6 py-10 md:grid-cols-12 md:items-center md:py-14" style={{ "--motion-index": index } as React.CSSProperties}>
+            <article key={service.number} className="motion-reveal group grid gap-6 py-10 md:grid-cols-12 md:items-center md:py-14" style={{ "--motion-index": index } as CSSProperties}>
               <span className="editorial-label text-gold md:col-span-1">{service.number}</span>
               <h2 className="font-display text-4xl md:col-span-4 md:text-5xl">{service.title}</h2>
               <p className="max-w-xl text-sm leading-7 text-muted-foreground md:col-span-5 md:col-start-8">{service.text}</p>
