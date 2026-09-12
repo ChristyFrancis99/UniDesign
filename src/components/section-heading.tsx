@@ -1,0 +1,3 @@
+export function SectionHeading({ label, title, copy, light = false }: { label: string; title: string; copy?: string; light?: boolean }) {
+  return <header className={light ? "text-warm-white" : "text-foreground"}><p className="editorial-label mb-7 text-gold">{label}</p><h2 className="display-lg whitespace-pre-line text-balance">{title}</h2>{copy && <p className={`mt-7 max-w-xl text-base leading-7 ${light ? "text-warm-white/65" : "text-muted-foreground"}`}>{copy}</p>}</header>;
+}
