@@ -1,0 +1,5 @@
+import { Link } from "@tanstack/react-router";
+import ctaImage from "../assets/cta-interior.jpg";
+import { Button } from "./ui/button";
+
+export function ConsultationCta() { return <section className="relative flex min-h-[680px] items-center justify-center overflow-hidden text-center text-warm-white"><img src={ctaImage} width={1920} height={1104} loading="lazy" alt="Calm contemporary bedroom with warm natural materials" className="absolute inset-0 h-full w-full object-cover" /><div className="absolute inset-0 bg-foreground/50" /><div className="relative z-10 px-5"><p className="editorial-label mb-8 text-gold">Begin a conversation</p><h2 className="display-lg">HAVE A SPACE<br />IN MIND?</h2><p className="mt-6 text-lg text-warm-white/75">Let's start a conversation.</p><Button asChild variant="inverse" className="mt-9"><Link to="/contact">Book a free consultation <span aria-hidden>→</span></Link></Button></div></section>; }
