@@ -17,9 +17,7 @@ function LoadingScreen() {
     <Html fullscreen>
       <div className="flex h-full w-full items-center justify-center bg-[#f4f1eb] text-[#242424]">
         <div className="w-[min(320px,80vw)] text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em]">
-            Loading render
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em]">Loading render</p>
           <div className="mt-5 h-px w-full bg-black/10">
             <div className="h-full bg-[#b99b4b] transition-[width] duration-200" style={{ width: `${percentage}%` }} />
           </div>
@@ -106,7 +104,6 @@ function InteriorModel() {
     group.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
 
     // Derive camera height from the room height instead of the largest room dimension.
-    // This avoids putting the camera near the ceiling when the room is wide/long.
     const normalizedSize = size.clone().multiplyScalar(scale);
     const normalizedHeight = normalizedSize.y;
     const eyeHeight = Math.max(0.35, normalizedHeight * 0.38);
@@ -141,9 +138,7 @@ function InteriorModel() {
     invalidate();
   }, [camera, invalidate, scene]);
 
-  if (modelError) {
-    return <ModelLoadError message={modelError} />;
-  }
+  if (modelError) return <ModelLoadError message={modelError} />;
 
   return (
     <Fragment>
@@ -164,14 +159,13 @@ function InteriorModel() {
   );
 }
 
-useGLTF.preload(MODEL_URL);
-
 export function Interactive3DExperience() {
   return (
     <ModelErrorBoundary>
       <div id="3d-space" className="h-screen w-full overflow-hidden bg-[#f4f1eb]" aria-label="Interactive 3D interior render">
         <Canvas
           camera={{ position: [2, 1.5, 2], fov: 55, near: 0.02, far: 100 }}
+          frameloop="demand"
           dpr={[1, 1.5]}
           shadows
           gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
