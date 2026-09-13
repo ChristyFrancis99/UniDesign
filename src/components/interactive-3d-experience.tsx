@@ -1,4 +1,4 @@
-import { Component, Fragment, Suspense, useEffect, useRef, useState } from "react";
+import { Component, Fragment, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, useGLTF, useProgress } from "@react-three/drei";
@@ -35,23 +35,29 @@ function LoadingScreen() {
   );
 }
 
+function ModelLoadErrorContent({ message }: { message: string }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-[#f4f1eb] px-6 text-[#242424]">
+      <div className="max-w-xl text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b99b4b]">
+          3D render unavailable
+        </p>
+        <h1 className="mt-4 text-2xl font-medium tracking-tight">
+          The interior model could not be displayed.
+        </h1>
+        <p className="mt-4 text-sm leading-6 text-black/55">{message}</p>
+        <p className="mt-5 break-all font-mono text-[11px] text-black/35">
+          {MODEL_URL}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ModelLoadError({ message }: { message: string }) {
   return (
     <Html fullscreen>
-      <div className="flex h-full w-full items-center justify-center bg-[#f4f1eb] px-6 text-[#242424]">
-        <div className="max-w-xl text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#b99b4b]">
-            3D render unavailable
-          </p>
-          <h1 className="mt-4 text-2xl font-medium tracking-tight">
-            The interior model could not be displayed.
-          </h1>
-          <p className="mt-4 text-sm leading-6 text-black/55">{message}</p>
-          <p className="mt-5 break-all font-mono text-[11px] text-black/35">
-            {MODEL_URL}
-          </p>
-        </div>
-      </div>
+      <ModelLoadErrorContent message={message} />
     </Html>
   );
 }
@@ -73,7 +79,7 @@ class ModelErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <ModelLoadError
+        <ModelLoadErrorContent
           message={this.state.error.message || "The 3D viewer failed to render."}
         />
       );
@@ -92,10 +98,15 @@ function getVisibleModelBounds(scene: THREE.Object3D) {
   scene.updateMatrixWorld(true);
 
   scene.traverse((object) => {
-    if (!(object instanceof THREE.Mesh) || !object.visible || !object.geometry) return;
+    if (!(object instanceof THREE.Mesh) || !object.geometry) return;
 
     const name = object.name.toLowerCase();
-    if (name.includes("panorama") || name.includes("sendai") || name.includes("360")) {
+    if (
+      name.includes("panorama") ||
+      name.includes("sendai") ||
+      name.includes("360") ||
+      name === "plane"
+    ) {
       object.visible = false;
       return;
     }
@@ -107,11 +118,6 @@ function getVisibleModelBounds(scene: THREE.Object3D) {
     meshBox.getCenter(meshCenter);
     meshBox.getSize(meshSize);
 
-    // The GLB contains several unrelated imported assets with transforms
-    // hundreds/thousands of units away from the actual room. They were making
-    // the old bounding box enormous, which reduced the room to an invisible
-    // speck. Keep geometry that belongs to the main room-sized scene and hide
-    // obvious outliers before calculating the camera frame.
     const centerDistance = meshCenter.length();
     const maxDimension = Math.max(meshSize.x, meshSize.y, meshSize.z);
     if (centerDistance > 20 || maxDimension > 20) {
@@ -131,76 +137,107 @@ function InteriorModel() {
   const { scene } = useGLTF(MODEL_URL);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const { camera, invalidate } = useThree();
-  const [modelError, setModelError] = useState<string | null>(null);
+
+  const { transform, error } = useMemo(() => {
+    try {
+      const bounds = getVisibleModelBounds(scene);
+
+      if (!bounds) {
+        return {
+          transform: null,
+          error: "The GLB contains no visible interior geometry.",
+        };
+      }
+
+      const size = new THREE.Vector3();
+      bounds.box.getSize(size);
+      const maxDimension = Math.max(size.x, size.y, size.z);
+
+      if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
+        return {
+          transform: null,
+          error: "The GLB contains invalid geometry bounds.",
+        };
+      }
+
+      const targetSize = 8;
+      const scale = targetSize / maxDimension;
+
+      scene.traverse((object) => {
+        if (!(object instanceof THREE.Mesh)) return;
+        object.castShadow = true;
+        object.receiveShadow = true;
+
+        const name = object.name.toLowerCase();
+        if (
+          name.includes("curtain") ||
+          name.includes("rug") ||
+          name.includes("sheet") ||
+          name.includes("plaid") ||
+          name.includes("leaf") ||
+          name.includes("leaves")
+        ) {
+          const materials = Array.isArray(object.material)
+            ? object.material
+            : [object.material];
+          materials.forEach((material) => {
+            if (material) material.side = THREE.DoubleSide;
+          });
+        }
+      });
+
+      return {
+        transform: {
+          scale,
+          position: [
+            -bounds.center.x * scale,
+            -bounds.center.y * scale,
+            -bounds.center.z * scale,
+          ] as [number, number, number],
+          size: size.clone().multiplyScalar(scale),
+        },
+        error: null,
+      };
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to process 3D model bounds.";
+      return { transform: null, error: message };
+    }
+  }, [scene]);
 
   useEffect(() => {
-    const bounds = getVisibleModelBounds(scene);
+    if (!transform) return;
 
-    if (!bounds) {
-      setModelError("The GLB contains no visible interior geometry.");
-      return;
-    }
+    const { size } = transform;
+    const distanceX = size.x * 0.75;
+    const distanceY = size.y * 0.45;
+    const distanceZ = size.z * 0.85;
 
-    const size = new THREE.Vector3();
-    bounds.box.getSize(size);
-    const maxDimension = Math.max(size.x, size.y, size.z);
-
-    if (!Number.isFinite(maxDimension) || maxDimension <= 0) {
-      setModelError("The GLB contains invalid geometry bounds.");
-      return;
-    }
-
-    setModelError(null);
-
-    const targetSize = 8;
-    const scale = targetSize / maxDimension;
-    scene.scale.setScalar(scale);
-    scene.position.set(
-      -bounds.center.x * scale,
-      -bounds.center.y * scale,
-      -bounds.center.z * scale,
-    );
-    scene.updateMatrixWorld(true);
-
-    const normalizedSize = size.clone().multiplyScalar(scale);
-    const normalizedHeight = Math.max(normalizedSize.y, 2);
-    const targetY = -normalizedHeight / 2 + normalizedHeight * 0.38;
-    const distance = Math.max(normalizedSize.x, normalizedSize.z, 4) * 0.85;
-
-    camera.position.set(distance, targetY + normalizedHeight * 0.12, distance);
-    camera.near = 0.01;
+    camera.position.set(distanceX, distanceY, distanceZ);
+    camera.near = 0.1;
     camera.far = 200;
-    camera.lookAt(0, targetY, 0);
+    camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 
     if (controlsRef.current) {
-      controlsRef.current.target.set(0, targetY, 0);
+      controlsRef.current.target.set(0, 0, 0);
       controlsRef.current.minDistance = 0.5;
-      controlsRef.current.maxDistance = 30;
+      controlsRef.current.maxDistance = 35;
       controlsRef.current.update();
     }
 
-    scene.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
-      object.castShadow = true;
-      object.receiveShadow = true;
-
-      const materials = Array.isArray(object.material)
-        ? object.material
-        : [object.material];
-      materials.forEach((material) => {
-        if (material) material.side = THREE.DoubleSide;
-      });
-    });
-
     invalidate();
-  }, [camera, invalidate, scene]);
+  }, [camera, invalidate, transform]);
 
-  if (modelError) return <ModelLoadError message={modelError} />;
+  if (error || !transform) {
+    return <ModelLoadError message={error || "Failed to load model."} />;
+  }
 
   return (
     <Fragment>
-      <primitive object={scene} />
+      <group scale={transform.scale} position={transform.position}>
+        <primitive object={scene} />
+      </group>
       <OrbitControls
         ref={controlsRef}
         makeDefault
@@ -209,13 +246,37 @@ function InteriorModel() {
         enablePan
         screenSpacePanning
         minPolarAngle={0.05}
-        maxPolarAngle={Math.PI - 0.05}
+        maxPolarAngle={Math.PI / 2 + 0.1}
       />
     </Fragment>
   );
 }
 
 export function Interactive3DExperience() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div
+        className="flex h-screen w-full items-center justify-center bg-[#f4f1eb] text-[#242424]"
+        aria-label="Loading 3D interior render"
+      >
+        <div className="w-[min(320px,80vw)] text-center">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em]">
+            Preparing render
+          </p>
+          <div className="mt-5 h-px w-full bg-black/10">
+            <div className="h-full w-1/3 bg-[#b99b4b] animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ModelErrorBoundary>
       <div
@@ -224,7 +285,7 @@ export function Interactive3DExperience() {
         aria-label="Interactive 3D interior render"
       >
         <Canvas
-          camera={{ position: [6, 3, 6], fov: 55, near: 0.01, far: 200 }}
+          camera={{ position: [6, 3, 6], fov: 55, near: 0.1, far: 200 }}
           dpr={[1, 1.5]}
           shadows
           gl={{
@@ -244,8 +305,7 @@ export function Interactive3DExperience() {
             castShadow
             position={[4, 8, 5]}
             intensity={4.5}
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
+            shadow-mapSize={[2048, 2048]}
           />
           <directionalLight position={[-4, 4, -3]} intensity={2.2} />
           <directionalLight position={[2, 3, 7]} intensity={1.5} />
@@ -259,3 +319,5 @@ export function Interactive3DExperience() {
 }
 
 useGLTF.preload(MODEL_URL);
+
+
