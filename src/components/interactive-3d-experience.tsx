@@ -58,11 +58,8 @@ function ErrorOverlay({ message }: { message: string }) {
 
 export function Interactive3DExperience() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const controlsRef = useRef<OrbitControls | null>(null);
-  const modelRef = useRef<THREE.Object3D | null>(null);
   const frameRef = useRef<number | null>(null);
+  const modelRef = useRef<THREE.Object3D | null>(null);
   const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const clockRef = useRef(new THREE.Clock());
 
@@ -80,13 +77,20 @@ export function Interactive3DExperience() {
     let renderer: THREE.WebGLRenderer | null = null;
     let camera: THREE.PerspectiveCamera | null = null;
     let controls: OrbitControls | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+
+    const reportError = (message: string, details?: unknown) => {
+      if (disposed) return;
+      console.error("Three.js 3D experience error", details ?? message);
+      setLoading(false);
+      setError(message);
+    };
 
     try {
       scene = new THREE.Scene();
       scene.background = new THREE.Color("#f4f1eb");
 
       camera = new THREE.PerspectiveCamera(68, 1, 0.01, 100);
-      cameraRef.current = camera;
 
       renderer = new THREE.WebGLRenderer({
         antialias: true,
@@ -99,7 +103,6 @@ export function Interactive3DExperience() {
       renderer.toneMappingExposure = 1.05;
       renderer.shadowMap.enabled = false;
       renderer.setClearColor("#f4f1eb", 1);
-      rendererRef.current = renderer;
       container.appendChild(renderer.domElement);
 
       const hemisphere = new THREE.HemisphereLight("#fffdf8", "#514b43", 1.8);
@@ -125,7 +128,6 @@ export function Interactive3DExperience() {
       controls.maxPolarAngle = Math.PI - 0.15;
       controls.minDistance = 0.25;
       controls.maxDistance = 20;
-      controlsRef.current = controls;
 
       const resize = () => {
         if (!container || !renderer || !camera) return;
@@ -137,7 +139,7 @@ export function Interactive3DExperience() {
       };
 
       resize();
-      const resizeObserver = new ResizeObserver(resize);
+      resizeObserver = new ResizeObserver(resize);
       resizeObserver.observe(container);
 
       const loader = new GLTFLoader();
@@ -169,12 +171,18 @@ export function Interactive3DExperience() {
             });
           });
 
+          if (meshCount === 0) {
+            reportError("The GLB loaded, but contains no visible meshes.");
+            return;
+          }
+
           scene.add(model);
           model.updateMatrixWorld(true);
 
           const box = new THREE.Box3().setFromObject(model);
-          if (box.isEmpty() || meshCount === 0) {
-            throw new Error("The GLB loaded, but contains no visible meshes.");
+          if (box.isEmpty()) {
+            reportError("The GLB loaded, but its geometry bounds are empty.");
+            return;
           }
 
           const center = box.getCenter(new THREE.Vector3());
@@ -182,11 +190,12 @@ export function Interactive3DExperience() {
           const maxDim = Math.max(size.x, size.y, size.z);
 
           if (!Number.isFinite(maxDim) || maxDim <= 0) {
-            throw new Error("The GLB has invalid geometry bounds.");
+            reportError("The GLB has invalid geometry bounds.");
+            return;
           }
 
           // The model is a real interior scene. Start the camera inside the
-          // room using the measured bounds instead of hardcoded GLB transforms.
+          // room using measured bounds instead of hardcoded GLB transforms.
           const floor = box.min.y;
           const ceiling = box.max.y;
           const roomHeight = Math.max(ceiling - floor, 1.5);
@@ -205,8 +214,8 @@ export function Interactive3DExperience() {
             eyeY,
             center.z + horizontalOffset,
           );
-
           const target = new THREE.Vector3(center.x, eyeY, center.z);
+
           camera.position.copy(eye);
           camera.near = Math.max(maxDim / 5000, 0.001);
           camera.far = Math.max(maxDim * 12, 50);
@@ -220,7 +229,9 @@ export function Interactive3DExperience() {
 
           if (gltf.animations.length > 0) {
             mixerRef.current = new THREE.AnimationMixer(model);
-            gltf.animations.forEach((clip) => mixerRef.current?.clipAction(clip).play());
+            gltf.animations.forEach((clip) => {
+              mixerRef.current?.clipAction(clip).play();
+            });
           }
 
           setDiagnostics({ meshes: meshCount, size, center, camera: eye });
@@ -238,6 +249,7 @@ export function Interactive3DExperience() {
           renderer.render(scene, camera);
         },
         (event) => {
+          if (disposed) return;
           if (event.total > 0) {
             setProgress((event.loaded / event.total) * 100);
           } else {
@@ -245,13 +257,10 @@ export function Interactive3DExperience() {
           }
         },
         (loadError) => {
-          console.error("Three.js GLB load failed", loadError);
-          if (!disposed) {
-            setLoading(false);
-            setError(
-              "The GLB could not be loaded. Check that the model exists at the path above and that the browser can access it.",
-            );
-          }
+          reportError(
+            "The GLB could not be loaded. Check that /models/interior-room.glb is reachable from the browser.",
+            loadError,
+          );
         },
       );
 
@@ -268,7 +277,7 @@ export function Interactive3DExperience() {
 
       return () => {
         disposed = true;
-        resizeObserver.disconnect();
+        resizeObserver?.disconnect();
 
         if (frameRef.current !== null) {
           window.cancelAnimationFrame(frameRef.current);
@@ -288,29 +297,27 @@ export function Interactive3DExperience() {
               : [object.material];
             materials.forEach((material) => material?.dispose());
           });
+          modelRef.current = null;
         }
 
         renderer?.dispose();
         renderer?.forceContextLoss();
-        rendererRef.current = null;
-        cameraRef.current = null;
-        controlsRef.current = null;
 
         if (renderer?.domElement.parentElement === container) {
           container.removeChild(renderer.domElement);
         }
       };
     } catch (initializationError) {
-      console.error("Three.js viewer initialization failed", initializationError);
-      setLoading(false);
-      setError(
+      reportError(
         initializationError instanceof Error
           ? initializationError.message
           : "WebGL could not be initialized in this browser.",
+        initializationError,
       );
 
       return () => {
         disposed = true;
+        resizeObserver?.disconnect();
         if (frameRef.current !== null) {
           window.cancelAnimationFrame(frameRef.current);
           frameRef.current = null;
