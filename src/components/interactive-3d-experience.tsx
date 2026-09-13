@@ -48,9 +48,6 @@ function ErrorOverlay({ message }: { message: string }) {
           The interior could not be displayed.
         </h1>
         <p className="mt-4 text-sm leading-6 text-black/55">{message}</p>
-        <p className="mt-5 break-all font-mono text-[11px] text-black/35">
-          {MODEL_URL}
-        </p>
       </div>
     </div>
   );
@@ -88,46 +85,56 @@ export function Interactive3DExperience() {
 
     try {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color("#f4f1eb");
+      scene.background = new THREE.Color("#e9e5dc");
 
-      camera = new THREE.PerspectiveCamera(68, 1, 0.01, 100);
+      camera = new THREE.PerspectiveCamera(60, 1, 0.01, 100);
 
       renderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: false,
         powerPreference: "high-performance",
       });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.05;
-      renderer.shadowMap.enabled = false;
-      renderer.setClearColor("#f4f1eb", 1);
+      renderer.toneMappingExposure = 1.0;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.setClearColor("#e9e5dc", 1);
       container.appendChild(renderer.domElement);
 
-      const hemisphere = new THREE.HemisphereLight("#fffdf8", "#514b43", 1.8);
+      const hemisphere = new THREE.HemisphereLight("#fffaf0", "#3e3831", 1.05);
       scene.add(hemisphere);
 
-      const ambient = new THREE.AmbientLight("#ffffff", 1.25);
+      const ambient = new THREE.AmbientLight("#ffffff", 0.28);
       scene.add(ambient);
 
-      const key = new THREE.DirectionalLight("#fff8e9", 2.4);
-      key.position.set(4, 7, 5);
+      const key = new THREE.DirectionalLight("#fff1d6", 2.4);
+      key.position.set(5, 8, 4);
+      key.castShadow = true;
+      key.shadow.mapSize.set(1024, 1024);
+      key.shadow.camera.near = 0.1;
+      key.shadow.camera.far = 40;
+      key.shadow.bias = -0.0003;
       scene.add(key);
 
-      const fill = new THREE.DirectionalLight("#e9f0ff", 1.0);
-      fill.position.set(-4, 3, -3);
+      const fill = new THREE.DirectionalLight("#d9e7ff", 0.65);
+      fill.position.set(-5, 4, 3);
       scene.add(fill);
+
+      const warmInterior = new THREE.PointLight("#ffd29b", 0.8, 14, 2);
+      warmInterior.position.set(0, 2.2, 0);
+      scene.add(warmInterior);
 
       controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.07;
+      controls.dampingFactor = 0.06;
       controls.enablePan = true;
       controls.screenSpacePanning = true;
-      controls.minPolarAngle = 0.15;
-      controls.maxPolarAngle = Math.PI - 0.15;
-      controls.minDistance = 0.25;
-      controls.maxDistance = 20;
+      controls.minPolarAngle = 0.2;
+      controls.maxPolarAngle = Math.PI - 0.2;
+      controls.minDistance = 0.35;
+      controls.maxDistance = 15;
 
       const resize = () => {
         if (!container || !renderer || !camera) return;
@@ -154,11 +161,11 @@ export function Interactive3DExperience() {
           let meshCount = 0;
           model.traverse((object) => {
             if (!(object instanceof THREE.Mesh)) return;
+
             meshCount += 1;
             object.visible = true;
-            object.frustumCulled = false;
-            object.castShadow = false;
-            object.receiveShadow = false;
+            object.castShadow = true;
+            object.receiveShadow = true;
 
             const materials = Array.isArray(object.material)
               ? object.material
@@ -166,8 +173,16 @@ export function Interactive3DExperience() {
 
             materials.forEach((material) => {
               if (!material) return;
-              material.side = THREE.DoubleSide;
               material.needsUpdate = true;
+
+              if ("map" in material && material.map) {
+                material.map.colorSpace = THREE.SRGBColorSpace;
+                material.map.anisotropy = Math.min(
+                  renderer.capabilities.getMaxAnisotropy(),
+                  8,
+                );
+                material.map.needsUpdate = true;
+              }
             });
           });
 
@@ -194,38 +209,51 @@ export function Interactive3DExperience() {
             return;
           }
 
-          // The model is a real interior scene. Start the camera inside the
-          // room using measured bounds instead of hardcoded GLB transforms.
+          // Put the viewer at human eye level inside the measured interior.
+          // No model-specific hardcoded world coordinates are required.
           const floor = box.min.y;
           const ceiling = box.max.y;
           const roomHeight = Math.max(ceiling - floor, 1.5);
           const eyeY = THREE.MathUtils.clamp(
-            floor + roomHeight * 0.42,
-            floor + 0.25,
-            ceiling - 0.25,
+            floor + roomHeight * 0.18,
+            floor + 0.35,
+            ceiling - 0.35,
           );
-          const horizontalOffset = Math.max(
-            Math.min(Math.min(size.x, size.z) * 0.16, 1.25),
-            0.55,
-          );
+
+          const roomWidth = Math.min(size.x, size.z);
+          const offset = THREE.MathUtils.clamp(roomWidth * 0.18, 0.7, 1.4);
 
           const eye = new THREE.Vector3(
-            center.x + horizontalOffset,
+            center.x + offset,
             eyeY,
-            center.z + horizontalOffset,
+            center.z + offset,
           );
-          const target = new THREE.Vector3(center.x, eyeY, center.z);
+          const target = new THREE.Vector3(
+            center.x,
+            THREE.MathUtils.clamp(
+              eyeY + roomHeight * 0.04,
+              floor + 0.6,
+              ceiling - 0.4,
+            ),
+            center.z,
+          );
 
           camera.position.copy(eye);
-          camera.near = Math.max(maxDim / 5000, 0.001);
-          camera.far = Math.max(maxDim * 12, 50);
+          camera.near = Math.max(maxDim / 5000, 0.01);
+          camera.far = Math.max(maxDim * 10, 50);
           camera.lookAt(target);
           camera.updateProjectionMatrix();
 
           controls.target.copy(target);
-          controls.minDistance = Math.max(Math.min(size.x, size.z) * 0.025, 0.12);
-          controls.maxDistance = Math.max(maxDim * 1.5, 12);
+          controls.minDistance = Math.max(roomWidth * 0.035, 0.25);
+          controls.maxDistance = Math.max(maxDim * 1.25, 10);
           controls.update();
+
+          key.shadow.camera.left = -maxDim;
+          key.shadow.camera.right = maxDim;
+          key.shadow.camera.top = maxDim;
+          key.shadow.camera.bottom = -maxDim;
+          key.shadow.camera.updateProjectionMatrix();
 
           if (gltf.animations.length > 0) {
             mixerRef.current = new THREE.AnimationMixer(model);
@@ -238,12 +266,14 @@ export function Interactive3DExperience() {
           setProgress(100);
           setLoading(false);
 
-          console.info("Three.js 3D experience loaded", {
-            meshes: meshCount,
-            center: center.toArray(),
-            size: size.toArray(),
-            camera: eye.toArray(),
-          });
+          if (import.meta.env.DEV) {
+            console.info("Three.js 3D experience loaded", {
+              meshes: meshCount,
+              center: center.toArray(),
+              size: size.toArray(),
+              camera: eye.toArray(),
+            });
+          }
 
           resize();
           renderer.render(scene, camera);
@@ -295,7 +325,10 @@ export function Interactive3DExperience() {
             const materials = Array.isArray(object.material)
               ? object.material
               : [object.material];
-            materials.forEach((material) => material?.dispose());
+            materials.forEach((material) => {
+              if (!material) return;
+              material.dispose();
+            });
           });
           modelRef.current = null;
         }
@@ -333,7 +366,7 @@ export function Interactive3DExperience() {
   }, []);
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-[#f4f1eb]">
+    <div className="relative h-screen w-full overflow-hidden bg-[#e9e5dc]">
       <div
         ref={containerRef}
         className="absolute inset-0 h-full w-full"
@@ -358,7 +391,7 @@ export function Interactive3DExperience() {
             size: {diagnostics.size.x.toFixed(2)} × {diagnostics.size.y.toFixed(2)} × {diagnostics.size.z.toFixed(2)}
           </div>
           <div>
-            center: {diagnostics.center.x.toFixed(2)}, {diagnostics.center.y.toFixed(2)}, {diagnostics.center.z.toFixed(2)}
+            camera: {diagnostics.camera.x.toFixed(2)}, {diagnostics.camera.y.toFixed(2)}, {diagnostics.camera.z.toFixed(2)}
           </div>
         </div>
       ) : null}
