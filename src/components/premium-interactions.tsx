@@ -2,9 +2,26 @@ import { useEffect } from "react";
 
 export function PremiumInteractions() {
   useEffect(() => {
-    const finePointer = window.matchMedia("(pointer: fine)").matches;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!finePointer || reduced) return;
+    const progress = document.createElement("div");
+    progress.className = "scroll-progress";
+    document.body.appendChild(progress);
+
+    const updateProgress = () => {
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const value = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
+      progress.style.transform = `scaleX(${value})`;
+    };
+    updateProgress();
+    window.addEventListener("scroll", updateProgress, { passive: true });
+
+    const finePointer = window.matchMedia("(pointer: fine)").matches;
+    if (!finePointer || reduced) {
+      return () => {
+        window.removeEventListener("scroll", updateProgress);
+        progress.remove();
+      };
+    }
 
     const cursor = document.createElement("div");
     cursor.className = "premium-cursor";
@@ -51,13 +68,15 @@ export function PremiumInteractions() {
 
     window.addEventListener("mousemove", move, { passive: true });
     return () => {
-      window.removeEventListener("mousemove", move);
+      window.removeEventListener("scroll", updateProgress);
       cancelAnimationFrame(raf);
+      window.removeEventListener("mousemove", move);
       magneticHandlers.forEach(({ element, onMove, onLeave }) => {
         element.removeEventListener("mousemove", onMove);
         element.removeEventListener("mouseleave", onLeave);
       });
       cursor.remove();
+      progress.remove();
     };
   }, []);
 
