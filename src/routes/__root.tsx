@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Outlet, Link, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRouteWithContext, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { SiteFooter } from "../components/site-footer";
 import { SiteHeader } from "../components/site-header";
 import { PremiumInteractions } from "../components/premium-interactions";
+import { StudioDynamics } from "../components/studio-dynamics";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -92,11 +93,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
   return (
     <QueryClientProvider client={queryClient}>
       <PremiumInteractions />
       <SiteHeader />
-      <main><MotionEnhancer /><Outlet /></main>
+      <main><MotionEnhancer /><Outlet />{location.pathname === "/" ? <StudioDynamics /> : null}</main>
       <SiteFooter />
     </QueryClientProvider>
   );
