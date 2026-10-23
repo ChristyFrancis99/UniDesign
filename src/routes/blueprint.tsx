@@ -94,19 +94,30 @@ function BlueprintPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 pt-32 md:pb-24">
+    <div className="min-h-screen bg-[#f7f6f2] pb-24 pt-28 md:pt-36">
       <section className="content-shell">
-        <div className="max-w-3xl">
-          <p className="editorial-label text-gold">DESIGN LAB · 01</p>
-          <h1 className="display-lg mt-5">YOUR SPACE.<br />YOUR BLUEPRINT.</h1>
-          <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-            Answer a few questions to create a simple 2D furniture layout based on your room dimensions.
-            Adjust the details and download your concept plan.
-          </p>
+        <div className="relative overflow-hidden border border-[#34372f] bg-[#22251f] px-6 py-10 text-[#f7f6f2] sm:px-10 sm:py-14 lg:px-16">
+          <div className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full border border-[#d4b77a]/25 sm:right-16 sm:top-[-7rem] sm:h-96 sm:w-96" />
+          <div className="pointer-events-none absolute right-8 top-12 h-40 w-40 rounded-full border border-[#d4b77a]/20 sm:right-28 sm:top-16 sm:h-64 sm:w-64" />
+          <div className="relative max-w-3xl">
+            <div className="flex items-center gap-3"><span className="h-px w-8 bg-[#d4b77a]" /><p className="editorial-label text-[#d4b77a]">UNI DESIGN GROUP / DESIGN LAB</p></div>
+            <h1 className="mt-6 font-display text-5xl leading-[.95] sm:text-6xl lg:text-7xl">A CLEARER VIEW<br /><span className="text-[#d4b77a]">OF YOUR SPACE.</span></h1>
+            <p className="mt-6 max-w-xl text-sm leading-7 text-white/70 sm:text-base">Create a first-pass furniture layout shaped around your room dimensions, daily needs and design preferences.</p>
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs uppercase tracking-[.12em] text-white/65">
+              <span className="flex items-center gap-2"><Ruler className="size-4 text-[#d4b77a]" /> Dimension-led</span>
+              <span className="flex items-center gap-2"><Layers3 className="size-4 text-[#d4b77a]" /> 2D concept plan</span>
+              <span className="flex items-center gap-2"><Download className="size-4 text-[#d4b77a]" /> Exportable</span>
+            </div>
+          </div>
         </div>
-
-        <div className="mt-12 grid items-start gap-8 lg:grid-cols-[340px_minmax(0,1fr)]">
-          <form onSubmit={generate} className="space-y-7 border border-border bg-card p-6 md:p-7">
+        <div className="mb-6 mt-10 flex flex-wrap items-end justify-between gap-4">
+          <div><p className="editorial-label text-gold">YOUR DESIGN WORKSPACE</p><h2 className="mt-2 font-display text-3xl sm:text-4xl">Start with the essentials.</h2></div>
+          <p className="max-w-sm text-sm leading-6 text-muted-foreground">A few details in. A clearer starting point for your interior.</p>
+        </div>
+        <div className="grid items-start gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+          <form onSubmit={generate} className="overflow-hidden border border-[#dedbd2] bg-white shadow-[0_12px_40px_rgba(32,35,28,0.04)]">
+            <div className="flex items-center justify-between border-b border-[#e8e5dc] bg-[#fbfaf7] px-6 py-5"><div><p className="editorial-label text-gold">DESIGN INPUTS</p><p className="mt-1 text-xs text-muted-foreground">01 / Tell us about the room</p></div><span className="grid size-9 place-items-center rounded-full border border-[#e0d9c8] text-gold"><Ruler className="size-4" /></span></div>
+            <div className="space-y-7 p-6 md:p-7">
             <div>
               <p className="editorial-label text-gold">01 — THE SPACE</p>
               <label htmlFor="room-type" className="mt-4 block text-sm font-medium">What room are you planning?</label>
@@ -153,13 +164,14 @@ function BlueprintPage() {
               </select>
             </div>
 
-            <Button type="submit" className="w-full" disabled={!validDimensions}><Ruler className="mr-2 size-4" /> Generate blueprint</Button>
-            <p className="text-xs leading-5 text-muted-foreground">This first version uses a built-in layout template. It does not call an external AI service, and its furniture positions are conceptual suggestions.</p>
+            <Button type="submit" className="h-12 w-full bg-[#252820] text-white hover:bg-[#3a3e34]" disabled={!validDimensions}><Ruler className="mr-2 size-4" /> Generate my blueprint <ArrowUpRight className="ml-auto size-4" /></Button>
+            <p className="text-xs leading-5 text-muted-foreground">This concept uses a built-in layout template. It is a planning aid, not a construction drawing.</p>
+            </div>
           </form>
 
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div><p className="editorial-label text-gold">YOUR PLAN</p><h2 className="mt-2 font-display text-3xl md:text-4xl">{generated ? roomType.toUpperCase() : "BLUEPRINT PREVIEW"}</h2></div>
+          <div className="min-w-0 border border-[#dedbd2] bg-white p-4 shadow-[0_12px_40px_rgba(32,35,28,0.04)] sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e8e5dc] pb-5">
+              <div><p className="editorial-label text-gold">02 / LAYOUT CANVAS</p><h2 className="mt-2 font-display text-3xl md:text-4xl">{generated ? roomType.toUpperCase() : "YOUR CONCEPT PLAN"}</h2><p className="mt-2 text-sm text-muted-foreground">Top-down view of the room and suggested furniture zones.</p></div>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" onClick={downloadSvg} disabled={!validDimensions}><Download className="mr-2 size-4" /> Export plan</Button>
                 <Button type="button" variant="outline" onClick={() => window.print()}><Printer className="mr-2 size-4" /> Print</Button>
