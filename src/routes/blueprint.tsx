@@ -31,11 +31,15 @@ function BlueprintPage() {
     roomLength >= 6 && roomLength <= 60 && roomWidth >= 6 && roomWidth <= 60;
 
   const plan = useMemo(() => {
-    const scale = Math.min(620 / roomLength, 420 / roomWidth);
+    // Keep the plan inside a dedicated drawing area below the title block.
+    // This prevents room dimensions and walls from colliding with the heading.
+    const scale = Math.min(560 / roomLength, 330 / roomWidth);
     const roomW = roomLength * scale;
     const roomH = roomWidth * scale;
     const x = (800 - roomW) / 2;
-    const y = (540 - roomH) / 2 + 10;
+    const drawingTop = 155;
+    const drawingHeight = 360;
+    const y = drawingTop + (drawingHeight - roomH) / 2;
     const pad = Math.max(18, Math.min(roomW, roomH) * 0.07);
     const furniture: { label: string; x: number; y: number; w: number; h: number; kind: string }[] = [];
     const add = (label: string, fx: number, fy: number, fw: number, fh: number, kind = "furniture") => {
@@ -185,13 +189,13 @@ function BlueprintPage() {
                 </defs>
                 <rect width="800" height="600" fill="#f5f2e9" />
                 <rect width="800" height="600" fill="url(#blueprint-grid)" />
-                <text x="40" y="42" fontSize="13" letterSpacing="2.5" fill="#6b665a">UNI DESIGN GROUP / DESIGN LAB</text>
-                <text x="40" y="67" fontSize="21" fontFamily="Georgia, serif" fill="#252923">{roomType.toUpperCase()} · CONCEPT PLAN</text>
-                <text x="40" y="88" fontSize="12" fill="#6b665a">{style} / {budget} / NOT TO SCALE FOR CONSTRUCTION</text>
+                <text x="40" y="38" fontSize="12" letterSpacing="2.5" fill="#6b665a">UNI DESIGN GROUP / DESIGN LAB</text>
+                <text x="40" y="68" fontSize="20" fontFamily="Georgia, serif" fill="#252923">{roomType.toUpperCase()} · CONCEPT PLAN</text>
+                <text x="40" y="91" fontSize="11" fill="#6b665a">{style} / {budget} / CONCEPTUAL LAYOUT</text>
 
                 <rect x={plan.x} y={plan.y} width={plan.roomW} height={plan.roomH} fill="#fbfaf5" stroke="#292d27" strokeWidth="7" />
                 <rect x={plan.x + plan.roomW * 0.28} y={plan.y + plan.roomH} width={plan.roomW * 0.22} height="7" fill="#f5f2e9" />
-                <path d={`M ${plan.x + plan.roomW * 0.28} ${plan.y + plan.roomH} A ${plan.roomW * 0.22} ${plan.roomW * 0.22} 0 0 1 ${plan.x + plan.roomW * 0.50} ${plan.y + plan.roomH - plan.roomW * 0.22}`} fill="none" stroke="#b9a77c" strokeWidth="1.5" strokeDasharray="4 4" />
+                <path d={`M ${plan.x + plan.roomW * 0.28} ${plan.y + plan.roomH} A ${plan.roomW * 0.11} ${plan.roomW * 0.11} 0 0 1 ${plan.x + plan.roomW * 0.50} ${plan.y + plan.roomH - plan.roomW * 0.11}`} fill="none" stroke="#b9a77c" strokeWidth="1.5" strokeDasharray="4 4" />
                 <line x1={plan.x + plan.roomW * 0.34} y1={plan.y} x2={plan.x + plan.roomW * 0.62} y2={plan.y} stroke="#7c9b9a" strokeWidth="5" />
                 <line x1={plan.x} y1={plan.y - 18} x2={plan.x + plan.roomW} y2={plan.y - 18} stroke="#777365" strokeWidth="1" />
                 <line x1={plan.x} y1={plan.y - 24} x2={plan.x} y2={plan.y - 12} stroke="#777365" strokeWidth="1" />
