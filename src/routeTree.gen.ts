@@ -59,8 +59,6 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
   '/blueprint': typeof BlueprintRoute
-  '/blueprint': typeof BlueprintRoute
-  '/blueprint': typeof BlueprintRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/projects/': typeof ProjectsIndexRoute
 }
@@ -69,6 +67,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
+  '/blueprint': typeof BlueprintRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/projects': typeof ProjectsIndexRoute
 }
@@ -78,16 +77,17 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/services': typeof ServicesRoute
+  '/blueprint': typeof BlueprintRoute
   '/projects/$slug': typeof ProjectsSlugRoute
   '/projects/': typeof ProjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/about' | '/contact' | '/services' | '/projects/$slug' | '/projects/'
+    '/' | '/about' | '/contact' | '/services' | '/blueprint' | '/projects/$slug' | '/projects/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/about' | '/contact' | '/services' | '/projects/$slug' | '/projects'
+    '/' | '/about' | '/contact' | '/services' | '/blueprint' | '/projects/$slug' | '/projects'
   id:
     | '__root__'
     | '/'
