@@ -16,7 +16,7 @@ export function SiteFooter() {
         </div>
         <nav className="md:col-span-2" aria-label="Footer navigation">
           <p className="editorial-label mb-6 text-gold">Navigate</p>
-          {[[ "Projects", "/projects" ], [ "About", "/about" ], [ "Services", "/services" ], [ "Contact", "/contact" ]].map(([label, to]) => <Link key={to} to={to} className="mb-3 block text-sm text-warm-white/70 transition-colors hover:translate-x-1 hover:text-gold">{label}</Link>)}
+          {[["Projects", "/projects"], ["Blueprint Lab", "/blueprint"], ["About", "/about"], ["Services", "/services"], ["Contact", "/contact"]].map(([label, to]) => <Link key={to} to={to} className="mb-3 block text-sm text-warm-white/70 transition-colors hover:translate-x-1 hover:text-gold">{label}</Link>)}
         </nav>
         <div className="md:col-span-2">
           <p className="editorial-label mb-6 text-gold">Connect</p>
@@ -27,7 +27,7 @@ export function SiteFooter() {
       <div className="content-shell mt-20 flex flex-wrap justify-between gap-4 border-t border-warm-white/15 pt-6 text-[10px] uppercase tracking-[0.14em] text-warm-white/45"><span>© UnI Design Group</span><span>The space is the interface.</span></div>
       <div className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 border-t border-border bg-warm-white p-2 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] md:hidden">
         <Link to="/contact" className="flex h-12 items-center justify-center text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-foreground">Contact studio</Link>
-        <Link to="/contact" className="flex h-12 items-center justify-center bg-foreground text-xs font-semibold uppercase tracking-[0.1em] text-warm-white transition-transform hover:-translate-y-0.5">Book consultation</Link>
+        <Link to="/blueprint" className="flex h-12 items-center justify-center bg-foreground text-xs font-semibold uppercase tracking-[0.1em] text-warm-white transition-transform hover:-translate-y-0.5">Create blueprint</Link>
       </div>
     </footer>
   );
