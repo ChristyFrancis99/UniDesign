@@ -14,12 +14,6 @@ const process = [
   ["Realise", "The design is coordinated through execution so the final space stays true to the intent.", "05"],
 ] as const;
 
-const testimonials = [
-  ["“The design feels considered from every angle. Nothing feels added just for the sake of it.”", "Residential client", "Pune"],
-  ["“The team translated a loose idea into a space that feels calm, practical and distinctly ours.”", "Private residence", "Pune"],
-  ["“Material, lighting and proportion were handled with exceptional attention to detail.”", "Studio collaboration", "Maharashtra"],
-] as const;
-
 const locations = [
   ["Pune", "Residential", "01"],
   ["Mumbai", "Interiors", "02"],
@@ -30,7 +24,6 @@ export function StudioDynamics() {
   return (
     <>
       <ProcessExplorer />
-      <Testimonials />
       <ProjectMap />
       <ProjectHotspots />
     </>
@@ -56,14 +49,6 @@ function ProcessExplorer() {
         </div>
       </div>
     </section>
-  );
-}
-
-function Testimonials() {
-  const [active, setActive] = useState(0);
-  const item = testimonials[active];
-  return (
-    <section className="bg-secondary py-28"><div className="content-shell grid gap-14 md:grid-cols-12 md:items-end"><div className="md:col-span-4"><SectionHeading label="14 — Client perspective" title="SPACES THAT STAY WITH YOU." /></div><div className="md:col-span-7 md:col-start-6"><div className="min-h-[260px] border-t border-border pt-10"><p className="font-display text-4xl leading-tight md:text-6xl">{item[0]}</p><div className="mt-10 flex items-end justify-between gap-6"><div><p className="editorial-label text-gold">{item[1]}</p><p className="mt-2 text-sm text-muted-foreground">{item[2]}</p></div><div className="flex gap-2">{testimonials.map((testimonial, index) => <button key={testimonial[1]} aria-label={`Show testimonial ${index + 1}`} onClick={() => setActive(index)} className={`h-2.5 w-10 rounded-full border ${active === index ? "bg-gold border-gold" : "border-border bg-transparent"}`} />)}</div></div></div></div></div></section>
   );
 }
 

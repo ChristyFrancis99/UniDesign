@@ -1,6 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/about")({ component: AboutPage });
+export const Route = createFileRoute("/about")({
+  head: () => ({
+    meta: [
+      { title: "About UnI Design Group | Architecture & Interior Design" },
+      { name: "description", content: "Learn about UnI Design Group's considered approach to architecture, interior design and visualisation." },
+      { property: "og:title", content: "About UnI Design Group | Architecture & Interior Design" },
+      { property: "og:description", content: "Learn about UnI Design Group's considered approach to architecture, interior design and visualisation." },
+    ],
+  }),
+  component: AboutPage,
+});
 
 function AboutPage() {
   return (

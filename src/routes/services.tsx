@@ -8,7 +8,17 @@ const services = [
   { number: "04", title: "Liaisoning & Sanctioning", text: "Practical support through approvals, coordination and sanctioning requirements for a smoother project journey." },
 ];
 
-export const Route = createFileRoute("/services")({ component: ServicesPage });
+export const Route = createFileRoute("/services")({
+  head: () => ({
+    meta: [
+      { title: "Services | UnI Design Group" },
+      { name: "description", content: "Explore architecture, interior design, 3D visualisation, and liaisoning and sanctioning services from UnI Design Group." },
+      { property: "og:title", content: "Services | UnI Design Group" },
+      { property: "og:description", content: "Explore architecture, interior design, 3D visualisation, and liaisoning and sanctioning services from UnI Design Group." },
+    ],
+  }),
+  component: ServicesPage,
+});
 
 function ServicesPage() {
   return (
@@ -19,7 +29,6 @@ function ServicesPage() {
           <h1 className="mt-7 display-xl max-w-5xl">FROM FIRST LINE TO FINAL DETAIL.</h1>
           <p className="mt-10 max-w-2xl text-base leading-8 text-muted-foreground md:text-lg">Architecture, interiors, visualisation and liaisoning brought together as one considered design process.</p>
         </div>
-
         <div className="mt-24 divide-y border-y border-border motion-stagger">
           {services.map((service, index) => (
             <article key={service.number} className="motion-reveal group grid gap-6 py-10 md:grid-cols-12 md:items-center md:py-14" style={{ "--motion-index": index } as CSSProperties}>
@@ -29,7 +38,6 @@ function ServicesPage() {
             </article>
           ))}
         </div>
-
         <div className="mt-20 flex flex-wrap items-center justify-between gap-6 border-t border-border pt-8 motion-reveal">
           <p className="text-sm text-muted-foreground">Have a space, site or idea in mind?</p>
           <Link to="/contact" className="editorial-label text-gold hover:text-foreground">Start a conversation →</Link>
