@@ -8,7 +8,8 @@ const services = [
   { number: "04", title: "Liaisoning & Sanctioning", text: "Practical support through approvals, coordination and sanctioning requirements for a smoother project journey." },
 ];
 
-export const Route = createFileRoute("/services")({ component: ServicesPage });
+export const Route = createFileRoute("/services")(
+  head: () => ({ meta: [{ title: "Services | UnI Design Group" }, { name: "description", content: "Explore architecture, interior design, 3D visualisation, and liaisoning and sanctioning services from UnI Design Group." }, { property: "og:title", content: "Services | UnI Design Group" }, { property: "og:description", content: "Explore architecture, interior design, 3D visualisation, and liaisoning and sanctioning services from UnI Design Group." }] }),{ component: ServicesPage });
 
 function ServicesPage() {
   return (
