@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 
 const links = [
   { label: "Projects", to: "/projects" as const },
+  { label: "Blueprint Lab", to: "/blueprint" as const },
   { label: "About", to: "/about" as const },
   { label: "Services", to: "/services" as const },
   { label: "Contact", to: "/contact" as const },
@@ -39,7 +40,7 @@ export function SiteHeader() {
           <span className="mt-1 block text-[9px] font-semibold tracking-[0.22em]">DESIGN GROUP</span>
         </Link>
 
-        <nav aria-label="Primary navigation" className="hidden items-center gap-8 lg:flex">
+        <nav aria-label="Primary navigation" className="hidden items-center gap-7 lg:flex">
           {links.map((link) => (
             <Link key={link.to} to={link.to} className="editorial-label border-b border-transparent py-2 transition-colors hover:border-gold hover:text-gold" activeProps={{ className: "text-gold border-gold" }}>
               {link.label}
