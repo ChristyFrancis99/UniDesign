@@ -1,8 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ContactForm } from "../components/contact-form";
 
-export const Route = createFileRoute("/contact")(
-  head: () => ({ meta: [{ title: "Contact UnI Design Group | Start a Project" }, { name: "description", content: "Start a conversation with UnI Design Group about your architecture, interior design or visualisation project." }, { property: "og:title", content: "Contact UnI Design Group | Start a Project" }, { property: "og:description", content: "Start a conversation with UnI Design Group about your architecture, interior design or visualisation project." }] }),{ component: ContactPage });
+export const Route = createFileRoute("/contact")({
+  head: () => ({
+    meta: [
+      { title: "Contact UnI Design Group | Start a Project" },
+      { name: "description", content: "Start a conversation with UnI Design Group about your architecture, interior design or visualisation project." },
+      { property: "og:title", content: "Contact UnI Design Group | Start a Project" },
+      { property: "og:description", content: "Start a conversation with UnI Design Group about your architecture, interior design or visualisation project." },
+    ],
+  }),
+  component: ContactPage,
+});
 
 function ContactPage() {
   return (
