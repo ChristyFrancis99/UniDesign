@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Printer, Ruler, RotateCcw } from "lucide-react";
+import { Download, Printer, Ruler, RotateCcw, Check, ArrowUpRight, Layers3 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { Button } from "../components/ui/button";
 
@@ -110,7 +110,7 @@ function BlueprintPage() {
             <div>
               <p className="editorial-label text-gold">01 — THE SPACE</p>
               <label htmlFor="room-type" className="mt-4 block text-sm font-medium">What room are you planning?</label>
-              <select id="room-type" value={roomType} onChange={(event) => { setRoomType(event.target.value as RoomType); setGenerated(false); }} className="mt-2 h-12 w-full border border-input bg-background px-3 text-sm outline-none focus:border-gold">
+              <select id="room-type" value={roomType} onChange={(event) => { setRoomType(event.target.value as RoomType); setGenerated(false); }} className="mt-2 h-12 w-full border border-[#dcd8ce] bg-[#fbfaf7] px-3 text-sm outline-none focus:border-gold">
                 <option>Living room</option><option>Bedroom</option><option>Kitchen</option><option>Studio apartment</option>
               </select>
             </div>
@@ -119,7 +119,7 @@ function BlueprintPage() {
               <p className="editorial-label text-gold">02 — MEASUREMENTS</p>
               <p className="mt-3 text-sm text-muted-foreground">Enter the internal room dimensions in feet.</p>
               <div className="mt-3 grid grid-cols-2 gap-3">
-                <div><label htmlFor="room-length" className="text-xs text-muted-foreground">Length (ft)</label><input id="room-length" type="number" min="6" max="60" step="0.5" required value={length} onChange={(event) => { setLength(event.target.value); setGenerated(false); }} className="mt-1 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-gold" /></div>
+                <div><label htmlFor="room-length" className="text-xs text-muted-foreground">Length (ft)</label><input id="room-length" type="number" min="6" max="60" step="0.5" required value={length} onChange={(event) => { setLength(event.target.value); setGenerated(false); }} className="mt-1 h-11 w-full border border-[#dcd8ce] bg-[#fbfaf7] px-3 text-sm outline-none focus:border-gold" /></div>
                 <div><label htmlFor="room-width" className="text-xs text-muted-foreground">Width (ft)</label><input id="room-width" type="number" min="6" max="60" step="0.5" required value={width} onChange={(event) => { setWidth(event.target.value); setGenerated(false); }} className="mt-1 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-gold" /></div>
               </div>
               {!validDimensions && <p className="mt-2 text-xs text-destructive">Use dimensions between 6 and 60 feet.</p>}
@@ -161,12 +161,12 @@ function BlueprintPage() {
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div><p className="editorial-label text-gold">YOUR PLAN</p><h2 className="mt-2 font-display text-3xl md:text-4xl">{generated ? roomType.toUpperCase() : "BLUEPRINT PREVIEW"}</h2></div>
               <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" onClick={downloadSvg} disabled={!validDimensions}><Download className="mr-2 size-4" /> Download SVG</Button>
+                <Button type="button" variant="outline" onClick={downloadSvg} disabled={!validDimensions}><Download className="mr-2 size-4" /> Export plan</Button>
                 <Button type="button" variant="outline" onClick={() => window.print()}><Printer className="mr-2 size-4" /> Print</Button>
               </div>
             </div>
 
-            <div className="mt-5 overflow-hidden border border-border bg-[#f5f2e9] p-2 sm:p-5">
+            <div className="mt-5 overflow-hidden border border-[#d8d3c7] bg-[#f5f2e9] p-2 sm:p-4">
               <svg id="blueprint-canvas" viewBox="0 0 800 600" role="img" aria-label={`Conceptual ${roomType} furniture blueprint, ${roomLength} by ${roomWidth} feet`} className="h-auto w-full">
                 <defs>
                   <pattern id="blueprint-grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#ded8c9" strokeWidth="0.6" /></pattern>
@@ -203,13 +203,13 @@ function BlueprintPage() {
               </svg>
             </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
               <div className="border-t border-gold pt-4"><p className="editorial-label text-gold">AREA</p><p className="mt-2 text-2xl font-display">{Math.round(roomLength * roomWidth)} sq ft</p></div>
               <div className="border-t border-gold pt-4"><p className="editorial-label text-gold">STYLE</p><p className="mt-2 text-lg">{style}</p></div>
               <div className="border-t border-gold pt-4"><p className="editorial-label text-gold">PRIORITIES</p><p className="mt-2 text-sm leading-6">{needs.length ? needs.join(", ") : "Open layout"}</p></div>
             </div>
-            <div className="mt-8 flex items-start gap-3 border border-border p-4">
-              <RotateCcw className="mt-0.5 size-4 shrink-0 text-gold" />
+            <div className="mt-6 flex items-start gap-3 border border-[#e5e0d4] bg-[#fbfaf7] p-4">
+              <Check className="mt-0.5 size-4 shrink-0 text-gold" />
               <p className="text-sm leading-6 text-muted-foreground">Treat this as an early planning aid, not a measured architectural drawing. Door and window positions, structural elements, clearances and furniture sizes must be checked before implementation.</p>
             </div>
           </div>
