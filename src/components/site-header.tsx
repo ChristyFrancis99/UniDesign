@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 
 const links = [
+  { label: "Home", to: "/" as const },
   { label: "Projects", to: "/projects" as const },
   { label: "Blueprint Lab", to: "/blueprint" as const },
   { label: "About", to: "/about" as const },
