@@ -10,6 +10,7 @@ import { Button } from "../components/ui/button";
 import { SectionHeading } from "../components/section-heading";
 import { ConsultationCta } from "../components/consultation-cta";
 import { ContactForm } from "../components/contact-form";
+import { InteriorWalkthrough } from "../components/interior-walkthrough";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "UnI Design Group | Architecture & Interior Design" }, { name: "description", content: "UnI Design Group creates thoughtful architecture, interiors and visualisations shaped around people, purpose and detail." }, { property: "og:title", content: "UnI Design Group | Architecture & Interior Design" }, { property: "og:description", content: "Thoughtful architecture, interiors and visualisations shaped around people, purpose and detail." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }),
@@ -37,6 +38,8 @@ function HomePage() {
       </div>
       <div className="absolute bottom-5 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 md:flex"><span className="editorial-label">Scroll to explore</span><span className="line-down h-10 w-px bg-gold" /></div>
     </section>
+
+    <InteriorWalkthrough />
 
     <section className="content-shell grid min-h-[680px] items-center gap-12 py-28 md:grid-cols-12"><div className="md:col-span-4"><p className="editorial-label text-gold">01 — The studio</p><div className="mt-7 h-px w-20 bg-gold" /></div><div className="md:col-span-8"><h2 className="display-lg">WE CREATE SPACES<br />WITH CHARACTER.</h2><p className="mt-8 max-w-2xl text-lg leading-8 text-muted-foreground">From architecture and interior design to 3D visualisation and liaisoning, UnI Design Group approaches every space through a balance of form, function and detail.</p></div></section>
 
