@@ -1,10 +1,6 @@
-<!-- LOVABLE:BEGIN -->
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+# Repository guidance
+
+- Preserve existing UI components, page structure, interactions, and visual design unless a task explicitly asks to change them.
+- Keep changes focused and maintain the existing project conventions.
+- Do not rewrite published Git history; use ordinary forward commits.
+- Verify changes with the available lint and build scripts when possible.
