@@ -65,7 +65,7 @@ export function InteriorWalkthrough() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/40" />
         <div className="content-shell relative z-10 flex items-start justify-between gap-6 pt-8 md:pt-10">
           <div>
-            <p className="editorial-label text-warm-white/70">03 — Inside the space</p>
+            <p className="editorial-label text-warm-white/70">Interior walkthrough</p>
             <h2 className="mt-3 max-w-xl font-display text-3xl leading-tight tracking-tight md:text-5xl">
               A WALK THROUGH<br className="hidden sm:block" /> THOUGHTFUL DESIGN.
             </h2>
