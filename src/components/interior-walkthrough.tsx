@@ -67,10 +67,14 @@ export function InteriorWalkthrough() {
           <div>
             <p className="editorial-label text-warm-white/70">Interior walkthrough</p>
             <h2 className="mt-3 max-w-xl font-display text-3xl leading-tight tracking-tight md:text-5xl">
-              A WALK THROUGH<br className="hidden sm:block" /> THOUGHTFUL DESIGN.
+              A WALK THROUGH
+              <br className="hidden sm:block" />
+              THOUGHTFUL DESIGN.
             </h2>
           </div>
-          <span className="editorial-label hidden pt-1 text-warm-white/60 sm:block">Scroll to explore ↓</span>
+          <span className="editorial-label hidden pt-1 text-warm-white/60 sm:block">
+            Scroll to explore ↓
+          </span>
         </div>
 
         <div className="absolute inset-0 flex items-center justify-center px-0 py-28 md:px-8 md:py-32">
