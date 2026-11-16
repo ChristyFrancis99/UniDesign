@@ -6,7 +6,6 @@ import { SiteHeader } from "../components/site-header";
 import { PremiumInteractions } from "../components/premium-interactions";
 import { StudioDynamics } from "../components/studio-dynamics";
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
