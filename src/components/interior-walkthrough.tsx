@@ -7,32 +7,53 @@ export function InteriorWalkthrough() {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<number | null>(null);
+  const targetTimeRef = useRef(0);
 
   useEffect(() => {
     const section = sectionRef.current;
     const video = videoRef.current;
     if (!section || !video) return;
 
-    let metadataReady = video.readyState >= 1;
+    let metadataReady = video.readyState >= HTMLMediaElement.HAVE_METADATA;
+    let isSeeking = false;
 
-    const updateFrame = () => {
+    const getProgress = () => {
+      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+      const scrollDistance = Math.max(1, section.offsetHeight - window.innerHeight);
+      return Math.min(1, Math.max(0, (window.scrollY - sectionTop) / scrollDistance));
+    };
+
+    const seekToTarget = () => {
+      if (!metadataReady || !Number.isFinite(video.duration) || video.duration <= 0) return;
+
+      const targetTime = targetTimeRef.current;
+      if (isSeeking || video.seeking) return;
+      if (Math.abs(video.currentTime - targetTime) < 0.035) return;
+
+      isSeeking = true;
+      video.currentTime = targetTime;
+    };
+
+    const updateFromScroll = () => {
       frameRef.current = null;
       if (!metadataReady || !Number.isFinite(video.duration) || video.duration <= 0) return;
 
-      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-      const scrollableDistance = Math.max(1, section.offsetHeight - window.innerHeight);
-      const progress = Math.min(1, Math.max(0, (window.scrollY - sectionTop) / scrollableDistance));
-      const nextTime = progress * video.duration;
-
-      // Seek only when the requested frame has moved meaningfully.
-      if (Math.abs(video.currentTime - nextTime) > 0.025) {
-        video.currentTime = nextTime;
-      }
+      targetTimeRef.current = getProgress() * video.duration;
+      seekToTarget();
     };
 
     const scheduleUpdate = () => {
       if (frameRef.current === null) {
-        frameRef.current = window.requestAnimationFrame(updateFrame);
+        frameRef.current = window.requestAnimationFrame(updateFromScroll);
+      }
+    };
+
+    const handleSeeked = () => {
+      isSeeking = false;
+      // If the user scrolled while the previous seek was decoding, immediately
+      // catch up to the latest scroll position instead of showing stale frames.
+      if (Math.abs(video.currentTime - targetTimeRef.current) >= 0.035) {
+        seekToTarget();
       }
     };
 
@@ -41,13 +62,17 @@ export function InteriorWalkthrough() {
       scheduleUpdate();
     };
 
+    video.pause();
     video.addEventListener("loadedmetadata", handleMetadata);
+    video.addEventListener("seeked", handleSeeked);
     window.addEventListener("scroll", scheduleUpdate, { passive: true });
     window.addEventListener("resize", scheduleUpdate);
-    scheduleUpdate();
+
+    if (metadataReady) scheduleUpdate();
 
     return () => {
       video.removeEventListener("loadedmetadata", handleMetadata);
+      video.removeEventListener("seeked", handleSeeked);
       window.removeEventListener("scroll", scheduleUpdate);
       window.removeEventListener("resize", scheduleUpdate);
       if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
@@ -58,11 +83,12 @@ export function InteriorWalkthrough() {
     <section
       ref={sectionRef}
       aria-label="Interior design walkthrough"
-      className="relative h-[280svh] bg-foreground text-warm-white"
+      className="relative h-[400svh] bg-foreground text-warm-white"
       data-motion-skip="true"
     >
       <div className="sticky top-0 flex h-[100svh] min-h-[560px] w-full flex-col justify-between overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/40" />
+
         <div className="content-shell relative z-10 flex items-start justify-between gap-6 pt-8 md:pt-10">
           <div>
             <p className="editorial-label text-warm-white/70">Interior walkthrough</p>
@@ -86,6 +112,7 @@ export function InteriorWalkthrough() {
             muted
             playsInline
             preload="auto"
+            disablePictureInPicture
             aria-label="Scroll-controlled walkthrough moving from the living room through the kitchen and dining area"
           />
         </div>
