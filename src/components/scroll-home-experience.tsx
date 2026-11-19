@@ -55,6 +55,7 @@ function useScrollScenes() {
         const distance = Math.max(1, rect.height - viewport);
         const progress = clamp(-rect.top / distance);
         scene.style.setProperty("--scene-progress", String(progress));
+        scene.style.setProperty("--hero-copy-opacity", String(clamp(1 - progress * 2.2)));
 
         const panels = Array.from(scene.querySelectorAll<HTMLElement>("[data-scene-panel]"));
         panels.forEach((panel, index) => {
@@ -89,7 +90,6 @@ function useScrollScenes() {
 
 export function ScrollHomeExperience() {
   useScrollScenes();
-  const [activeService, setActiveService] = useState(0);
   const [activeMaterial, setActiveMaterial] = useState(0);
   const material = materials[activeMaterial];
 
@@ -147,7 +147,7 @@ export function ScrollHomeExperience() {
             </div>
             <div className="relative mt-12 min-h-[390px] flex-1 border-t border-warm-white/20">
               {services.map(([name, copy, number], index) => (
-                <article key={name} data-scene-panel className="absolute inset-0 flex flex-col justify-center border-b border-warm-white/15" onMouseEnter={() => setActiveService(index)}>
+                <article key={name} data-scene-panel className="absolute inset-0 flex flex-col justify-center border-b border-warm-white/15">
                   <div className="flex items-start justify-between gap-5">
                     <span className="editorial-label text-gold">{number} / 04</span>
                     <span className="editorial-label text-warm-white/40">UnI · Design discipline</span>
@@ -157,9 +157,6 @@ export function ScrollHomeExperience() {
                   <Link to="/services" className="mt-9 inline-flex w-fit items-center gap-4 editorial-label text-gold">Explore service <span>↗</span></Link>
                 </article>
               ))}
-            </div>
-            <div className="mt-8 flex gap-3">
-              {services.map(([name], index) => <button key={name} onClick={() => setActiveService(index)} aria-label={`Show ${name}`} className={`h-1 flex-1 ${activeService === index ? "bg-gold" : "bg-warm-white/20"}`} />)}
             </div>
           </div>
         </div>
