@@ -21,7 +21,7 @@ export function ConsultationCta() {
         />
         <div className="absolute inset-0 bg-foreground/55" />
         <div className="content-shell relative z-10 px-5">
-          <p className="editorial-label mb-8 text-gold">Begin a conversation</p>
+          <p className="editorial-label mb-8 text-gold">09 — Begin a conversation</p>
           <h2 className="display-lg">HAVE A SPACE<br />IN MIND?</h2>
           <p className="mt-6 text-lg text-warm-white/75">Let's start a conversation.</p>
           <Button asChild variant="inverse" className="mt-9">
