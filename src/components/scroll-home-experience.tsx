@@ -185,7 +185,7 @@ export function ScrollHomeExperience() {
         <div className="scroll-scene__pin">
           <div className="content-shell flex h-full flex-col justify-center py-20">
             <div className="flex items-end justify-between gap-6">
-              <div><p className="editorial-label text-gold">02 — Expertise</p><h2 className="mt-5 display-lg">WHAT WE DO.</h2></div>
+              <div><p className="editorial-label text-gold">03 — Expertise</p><h2 className="mt-5 display-lg">WHAT WE DO.</h2></div>
               <p className="hidden max-w-xs text-sm leading-6 text-warm-white/55 md:block">Four connected disciplines. One consistent design language.</p>
             </div>
             <div className="relative mt-12 min-h-[390px] flex-1 border-t border-warm-white/20">
@@ -205,11 +205,11 @@ export function ScrollHomeExperience() {
         </div>
       </section>
 
-      <section data-scroll-scene data-motion-skip="true" id="projects" className="scroll-scene h-[300svh] overflow-hidden bg-secondary" data-horizontal-scene>
+      <section data-scroll-scene data-motion-skip="true" id="projects" className="scroll-scene h-[300svh] bg-secondary" data-horizontal-scene>
         <div className="scroll-scene__pin">
           <div className="content-shell flex h-full flex-col justify-center py-20">
             <div className="flex items-end justify-between gap-6">
-              <div><p className="editorial-label text-gold">03 — Selected work</p><h2 className="mt-5 display-lg">SPACES, MADE<br />TANGIBLE.</h2></div>
+              <div><p className="editorial-label text-gold">04 — Selected work</p><h2 className="mt-5 display-lg">SPACES, MADE<br />TANGIBLE.</h2></div>
               <Link to="/projects" className="hidden editorial-label text-gold md:block">View all projects ↗</Link>
             </div>
             <div data-horizontal-track className="mt-10 flex min-h-0 flex-1 items-center gap-8 md:gap-12">
@@ -238,7 +238,7 @@ export function ScrollHomeExperience() {
         <div className="scroll-scene__pin">
           <div className="content-shell grid h-full items-center gap-10 py-20 md:grid-cols-12">
             <div className="md:col-span-4">
-              <p className="editorial-label text-gold">04 — Material language</p>
+              <p className="editorial-label text-gold">05 — Material language</p>
               <h2 className="mt-6 display-lg">THE DETAILS<br />MATTER.</h2>
               <p className="mt-6 text-sm leading-7 text-muted-foreground">Explore the ingredients that give a space its character. Scroll through the textures, tones and light that shape our work.</p>
               <div className="mt-10 border-t border-border">
@@ -258,7 +258,7 @@ export function ScrollHomeExperience() {
       <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[260svh] bg-foreground text-warm-white">
         <div className="scroll-scene__pin">
           <div className="content-shell flex h-full flex-col justify-center py-20">
-            <p className="editorial-label text-gold">05 — The process</p>
+            <p className="editorial-label text-gold">06 — The process</p>
             <h2 className="mt-5 display-lg">FROM FIRST THOUGHT<br />TO FINISHED SPACE.</h2>
             <div className="relative mt-14 grid flex-1 items-center gap-8 md:grid-cols-5">
               <div className="absolute left-0 right-0 top-1/2 hidden h-px bg-warm-white/20 md:block" />
@@ -276,14 +276,14 @@ export function ScrollHomeExperience() {
         <div className="scroll-scene__pin">
           <div className="content-shell grid h-full items-center gap-12 py-20 md:grid-cols-12">
             <div className="md:col-span-7" data-scene-panel><img src={interiorImage} alt="Considered interior by UnI Design Group" className="aspect-[4/5] max-h-[72svh] w-full object-cover" /></div>
-            <div className="md:col-span-5" data-scene-panel><p className="editorial-label text-gold">06 — The studio</p><h2 className="mt-7 display-lg">DESIGNING<br />WITH PURPOSE.</h2><p className="mt-7 leading-7 text-muted-foreground">UnI Design Group brings architecture, interior design and visualisation together to create considered spaces shaped around people and place.</p><Button asChild variant="editorial" className="mt-8"><Link to="/about">Meet the studio →</Link></Button></div>
+            <div className="md:col-span-5" data-scene-panel><p className="editorial-label text-gold">07 — The studio</p><h2 className="mt-7 display-lg">DESIGNING<br />WITH PURPOSE.</h2><p className="mt-7 leading-7 text-muted-foreground">UnI Design Group brings architecture, interior design and visualisation together to create considered spaces shaped around people and place.</p><Button asChild variant="editorial" className="mt-8"><Link to="/about">Meet the studio →</Link></Button></div>
           </div>
         </div>
       </section>
 
       <section id="contact" className="bg-secondary py-24">
         <div className="content-shell grid gap-12 md:grid-cols-2 md:items-center">
-          <div><p className="editorial-label text-gold">07 — Begin a conversation</p><h2 className="mt-6 display-lg">HAVE A SPACE<br />IN MIND?</h2><p className="mt-6 max-w-md leading-7 text-muted-foreground">Tell us what you are imagining. We would love to understand the brief and explore what it could become.</p><Button asChild variant="editorial" className="mt-8"><Link to="/contact">Start your project →</Link></Button></div>
+          <div><p className="editorial-label text-gold">08 — Begin a conversation</p><h2 className="mt-6 display-lg">HAVE A SPACE<br />IN MIND?</h2><p className="mt-6 max-w-md leading-7 text-muted-foreground">Tell us what you are imagining. We would love to understand the brief and explore what it could become.</p><Button asChild variant="editorial" className="mt-8"><Link to="/contact">Start your project →</Link></Button></div>
           <div className="border border-border bg-background p-5 md:p-8"><ContactForm /></div>
         </div>
       </section>
