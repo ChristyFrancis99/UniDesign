@@ -1,7 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
+
+const sectionLinks = [
+  ["The studio", "#studio"], ["Walkthrough", "#walkthrough"], ["Expertise", "#expertise"], ["Selected work", "#projects"], ["Material language", "#materials"], ["The process", "#process"], ["Studio philosophy", "#philosophy"], ["Contact", "#contact"], ["Consultation", "#consultation"], ["Interactive process", "#interactive-process"], ["Where we work", "#locations"], ["Detail hotspots", "#details"],
+] as const;
 
 const links = [
   { label: "Home", to: "/" as const },
@@ -15,11 +19,19 @@ const links = [
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const lastScroll = useRef(0);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const overHero = pathname === "/" || pathname.startsWith("/projects/");
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 48);
+    const onScroll = () => {
+      const current = window.scrollY;
+      setScrolled(current > 48);
+      if (current < 100 || current < lastScroll.current - 4) setVisible(true);
+      else if (current > lastScroll.current + 6) setVisible(false);
+      lastScroll.current = current;
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -34,7 +46,7 @@ export function SiteHeader() {
   const darkText = scrolled || !overHero;
 
   return (
-    <header className={`nav-in fixed inset-x-0 top-0 z-50 border-b transition-all duration-500 ${scrolled ? "border-border bg-warm-white/95 shadow-sm backdrop-blur-md" : "border-transparent bg-transparent"}`}>
+    <header className={`site-header nav-in fixed inset-x-0 top-0 z-50 border-b transition-all duration-500 ${visible || open ? "translate-y-0" : "-translate-y-full"} ${scrolled ? "border-border bg-warm-white/95 shadow-sm backdrop-blur-md" : "border-transparent bg-transparent"}`}>
       <div className={`content-shell flex h-24 items-center justify-between ${darkText ? "text-foreground" : "text-warm-white"}`}>
         <Link to="/" aria-label="UnI Design Group home" className="relative z-50 leading-none no-motion">
           <span className="font-display text-4xl">Un<span className="text-gold">I</span></span>
@@ -52,21 +64,25 @@ export function SiteHeader() {
           </Button>
         </nav>
 
-        <Button variant="ghost" size="icon" className={`relative z-50 lg:hidden ${open ? "text-warm-white hover:bg-warm-white/10" : ""}`} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? "Close menu" : "Open menu"}>
+        <Button variant="ghost" className={`relative z-50 hidden lg:inline-flex ${darkText ? "text-foreground" : "text-warm-white"}`} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="site-navigation-overlay">
+          {open ? "Close" : "Menu"} {open ? <X className="ml-2 h-4 w-4" /> : <Menu className="ml-2 h-4 w-4" />}
+        </Button>
+        <Button variant="ghost" size="icon" className={`relative z-50 lg:hidden ${open ? "text-warm-white hover:bg-warm-white/10" : ""}`} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="site-navigation-overlay" aria-label={open ? "Close menu" : "Open menu"}>
           {open ? <X /> : <Menu />}
         </Button>
       </div>
 
-      <div id="mobile-navigation" aria-hidden={!open} className={`fixed inset-0 z-40 bg-foreground text-warm-white transition-[opacity,visibility] duration-500 lg:hidden ${open ? "visible opacity-100" : "invisible opacity-0"}`}>
-        <nav className="flex h-full flex-col justify-center px-8" aria-label="Mobile navigation">
-          {links.map((link, index) => (
-            <Link key={link.to} to={link.to} tabIndex={open ? 0 : -1} className="border-b border-warm-white/15 py-4 font-display text-4xl opacity-0 transition-[opacity,transform,color] duration-500 hover:text-gold" style={{ transform: open ? "translateX(0)" : "translateX(-20px)", opacity: open ? 1 : 0, transitionDelay: open ? `${index * 70 + 120}ms` : "0ms" }}>
-              <span className="mr-5 font-sans text-xs text-gold">0{index + 1}</span>{link.label}
-            </Link>
-          ))}
-          <Link to="/contact" tabIndex={open ? 0 : -1} className="mt-8 editorial-label text-gold opacity-0 transition-opacity duration-500" style={{ opacity: open ? 1 : 0, transitionDelay: open ? "500ms" : "0ms" }}>
-            Start a project →
-          </Link>
+      <div id="site-navigation-overlay" aria-hidden={!open} className={`fixed inset-0 z-40 overflow-y-auto bg-foreground text-warm-white transition-[opacity,visibility] duration-500 ${open ? "visible opacity-100" : "invisible opacity-0"}`}>
+        <nav className="content-shell flex min-h-full flex-col justify-center py-28" aria-label="Homepage sections">
+          <p className="editorial-label mb-8 text-gold">Explore UnI Design Group</p>
+          <div className="grid gap-x-12 gap-y-1 md:grid-cols-2">
+            {sectionLinks.map(([label, href], index) => (
+              <a key={href} href={href} tabIndex={open ? 0 : -1} onClick={() => setOpen(false)} className="border-b border-warm-white/15 py-3 font-display text-2xl opacity-0 transition-[opacity,transform,color] duration-500 hover:translate-x-2 hover:text-gold md:text-3xl" style={{ transform: open ? "translateX(0)" : "translateX(-20px)", opacity: open ? 1 : 0, transitionDelay: open ? `${index * 45 + 100}ms` : "0ms" }}>
+                <span className="mr-5 font-sans text-[10px] text-gold">0{index + 1}</span>{label}
+              </a>
+            ))}
+          </div>
+          <Link to="/contact" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)} className="mt-10 editorial-label text-gold">Start a project →</Link>
         </nav>
       </div>
     </header>
