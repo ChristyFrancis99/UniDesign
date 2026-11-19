@@ -1,4 +1,7 @@
 import { useEffect } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Lenis from "lenis";
 import { Link } from "@tanstack/react-router";
 import heroImage from "../assets/uni-hero.jpg";
 import mudraImage from "../assets/mudra-living.jpg";
@@ -42,47 +45,74 @@ const process = [
 
 function useScrollScenes() {
   useEffect(() => {
-    const scenes = Array.from(document.querySelectorAll<HTMLElement>("[data-scroll-scene]"));
-    let frame = 0;
-    const clamp = (value: number) => Math.min(1, Math.max(0, value));
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    gsap.registerPlugin(ScrollTrigger);
 
-    const update = () => {
-      frame = 0;
-      const viewport = window.innerHeight;
+    // Lenis provides consistent inertia; ScrollTrigger is kept in sync with it.
+    const lenis = reducedMotion ? null : new Lenis({ duration: 1.15, smoothWheel: true, touchMultiplier: 1.35 });
+    const onLenisScroll = () => ScrollTrigger.update();
+    lenis?.on("scroll", onLenisScroll);
+    const ticker = (time: number) => lenis?.raf(time * 1000);
+    if (lenis) {
+      gsap.ticker.add(ticker);
+      gsap.ticker.lagSmoothing(0);
+    }
+
+    const context = gsap.context(() => {
+      const scenes = gsap.utils.toArray<HTMLElement>("[data-scroll-scene]");
       scenes.forEach((scene) => {
-        const rect = scene.getBoundingClientRect();
-        const distance = Math.max(1, rect.height - viewport);
-        const progress = clamp(-rect.top / distance);
-        scene.style.setProperty("--scene-progress", String(progress));
-        scene.style.setProperty("--hero-copy-opacity", String(clamp(1 - progress * 2.2)));
-
-        const panels = Array.from(scene.querySelectorAll<HTMLElement>("[data-scene-panel]"));
-        panels.forEach((panel, index) => {
-          const center = panels.length === 1 ? 0.5 : index / (panels.length - 1);
-          const opacity = panels.length === 1 ? 1 : clamp(1 - Math.abs(progress - center) * Math.max(2.4, panels.length * 1.35));
-          const offset = panels.length === 1 ? 0 : (center - progress) * 76;
-          panel.style.setProperty("--panel-opacity", String(opacity));
-          panel.style.setProperty("--panel-y", `${offset}px`);
-          panel.style.pointerEvents = opacity > 0.08 ? "auto" : "none";
-        });
-
         const image = scene.querySelector<HTMLElement>("[data-scene-image]");
-        if (image) {
-          image.style.transform = `scale(${1.1 - progress * 0.1}) translate3d(0, ${progress * -1.8}%, 0)`;
+        const panels = gsap.utils.toArray<HTMLElement>(scene.querySelectorAll("[data-scene-panel]"));
+        if (image && !reducedMotion) {
+          gsap.fromTo(image, { scale: 1.12, yPercent: 2 }, {
+            scale: 1, yPercent: -2, ease: "none",
+            scrollTrigger: { trigger: scene, start: "top bottom", end: "bottom top", scrub: 1 }
+          });
+        }
+        if (panels.length && !reducedMotion) {
+          const timeline = gsap.timeline({
+            scrollTrigger: { trigger: scene, start: "top top", end: "bottom bottom", scrub: 0.8 }
+          });
+          panels.forEach((panel, index) => {
+            const total = panels.length;
+            const at = index / total;
+            timeline.fromTo(panel,
+              { autoAlpha: 0, y: 48 },
+              { autoAlpha: 1, y: 0, duration: 0.32, ease: "power2.out" }, at
+            ).to(panel, { autoAlpha: 0, y: -32, duration: 0.24, ease: "power2.in" }, Math.min(0.98, at + 0.72 / total));
+          });
         }
       });
-    };
 
-    const schedule = () => {
-      if (!frame) frame = window.requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
+      const hero = document.querySelector<HTMLElement>("[data-home-hero]");
+      if (hero && !reducedMotion) {
+        const heroImage = hero.querySelector<HTMLElement>("[data-scene-image]");
+        const heroCopy = hero.querySelector<HTMLElement>("[data-hero-copy]");
+        const intro = gsap.timeline({ scrollTrigger: { trigger: hero, start: "top top", end: "bottom bottom", scrub: 1 } });
+        if (heroImage) intro.to(heroImage, { scale: 0.78, clipPath: "inset(8% 8% 8% 8% round 2px)", ease: "none" }, 0);
+        if (heroCopy) intro.to(heroCopy, { y: -90, autoAlpha: 0, ease: "none" }, 0);
+      }
+
+      const expertise = document.querySelector<HTMLElement>("[data-theme-flip]");
+      if (expertise && !reducedMotion) {
+        ScrollTrigger.create({
+          trigger: expertise, start: "top 65%", end: "bottom 35%",
+          onEnter: () => document.documentElement.classList.add("studio-dark"),
+          onEnterBack: () => document.documentElement.classList.add("studio-dark"),
+          onLeave: () => document.documentElement.classList.remove("studio-dark"),
+          onLeaveBack: () => document.documentElement.classList.remove("studio-dark")
+        });
+      }
+    });
+
     return () => {
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      if (frame) window.cancelAnimationFrame(frame);
+      context.revert();
+      lenis?.off("scroll", onLenisScroll);
+      if (lenis) {
+        gsap.ticker.remove(ticker);
+        lenis.destroy();
+      }
+      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
   }, []);
 }
@@ -92,12 +122,12 @@ export function ScrollHomeExperience() {
 
   return (
     <div className="scroll-home">
-      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[190svh] bg-foreground text-warm-white">
+      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[190svh] bg-foreground text-warm-white" data-home-hero>
         <div className="scroll-scene__pin">
           <img data-scene-image src={heroImage} alt="Contemporary UnI Design residence" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/20" />
           <div className="content-shell relative z-10 flex h-full flex-col justify-end pb-20 md:pb-24">
-            <div className="max-w-5xl" style={{ opacity: "var(--hero-copy-opacity, 1)", transform: "translate3d(0, calc(var(--scene-progress) * -70px), 0)" }}>
+            <div data-hero-copy className="max-w-5xl">
               <p className="editorial-label mb-7 text-warm-white/75">Architecture · Interior · Visualisation</p>
               <h1 className="display-xl">DESIGNING<br />SPACES THAT<br /><span className="text-gold">FEEL DISTINCT.</span></h1>
               <div className="mt-8 grid gap-8 md:grid-cols-2 md:items-end">
@@ -135,7 +165,7 @@ export function ScrollHomeExperience() {
 
       <InteriorWalkthrough />
 
-      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[260svh] bg-foreground text-warm-white">
+      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[260svh] bg-foreground text-warm-white" data-theme-flip>
         <div className="scroll-scene__pin">
           <div className="content-shell flex h-full flex-col justify-center py-20">
             <div className="flex items-end justify-between gap-6">
