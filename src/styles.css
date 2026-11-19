@@ -58,3 +58,37 @@ a,button,input,textarea,select { transition: color .35s ease,background-color .3
 @media (prefers-reduced-motion: reduce) {
   .studio-scroll-pin { position: relative; min-height: 100svh; }
 }
+
+
+/* Cinematic UnI homepage system */
+:root { --studio-cream:#F4EDE1; --studio-ivory:#FAF6EE; --studio-walnut:#5A3825; --studio-brass:#C79A3E; --studio-charcoal:#1B1A18; --studio-marble:#F1F0ED; }
+html, body { background:var(--studio-cream); }
+body { transition:background-color .7s ease,color .7s ease; }
+.studio-dark body { background:var(--studio-charcoal); color:var(--studio-ivory); }
+.studio-dark .site-header { color:var(--studio-ivory); }
+.scroll-home { --scene-gutter:clamp(20px,5vw,88px); }
+.scroll-home .content-shell { width:min(calc(100% - var(--scene-gutter)*2),1440px); }
+.scroll-home h1,.scroll-home h2,.scroll-home h3 { text-wrap:balance; }
+.scroll-home .scroll-scene { isolation:isolate; }
+.scroll-home [data-scene-panel] { will-change:transform,opacity; }
+.scroll-home .project-image-wrap img { transition:transform 1s cubic-bezier(.2,.75,.2,1); }
+.scroll-home .project-image-wrap:hover img { transform:scale(1.055); }
+.scroll-home a:focus-visible,.scroll-home button:focus-visible { outline:2px solid var(--studio-brass); outline-offset:5px; }
+.scroll-home .editorial-label { letter-spacing:.18em; }
+.scroll-home [data-theme-flip] { background:var(--studio-charcoal); color:var(--studio-ivory); }
+.scroll-home [data-theme-flip] .text-muted-foreground { color:rgba(250,246,238,.58); }
+.scroll-home [data-theme-flip] .border-border { border-color:rgba(250,246,238,.18); }
+.scroll-home .scroll-scene__pin { backface-visibility:hidden; }
+.studio-scroll-pin { overflow:clip; }
+@media (hover:hover) and (pointer:fine) {
+  .scroll-home [data-cursor] { cursor:none; }
+}
+@media (max-width:767px) {
+  .scroll-home .display-xl { font-size:clamp(3rem,13vw,5.2rem); }
+  .scroll-home .display-lg { font-size:clamp(2.5rem,10vw,4rem); }
+  .scroll-home .scroll-scene__pin { min-height:100svh; }
+}
+@media (prefers-reduced-motion:reduce) {
+  html.lenis,html.lenis body { height:auto; }
+  .scroll-home [data-scene-panel] { opacity:1!important; visibility:visible!important; transform:none!important; }
+}
