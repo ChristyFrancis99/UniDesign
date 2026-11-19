@@ -93,6 +93,22 @@ function useScrollScenes() {
         if (heroCopy) intro.to(heroCopy, { y: -90, autoAlpha: 0, ease: "none" }, 0);
       }
 
+      const horizontalScene = document.querySelector<HTMLElement>("[data-horizontal-scene]");
+      const horizontalTrack = horizontalScene?.querySelector<HTMLElement>("[data-horizontal-track]");
+      if (horizontalScene && horizontalTrack && !reducedMotion) {
+        gsap.to(horizontalTrack, {
+          x: () => -Math.max(0, horizontalTrack.scrollWidth - window.innerWidth + 40),
+          ease: "none",
+          scrollTrigger: {
+            trigger: horizontalScene,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 1,
+            invalidateOnRefresh: true
+          }
+        });
+      }
+
       const expertise = document.querySelector<HTMLElement>("[data-theme-flip]");
       if (expertise && !reducedMotion) {
         ScrollTrigger.create({
@@ -189,18 +205,18 @@ export function ScrollHomeExperience() {
         </div>
       </section>
 
-      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[300svh] bg-secondary">
+      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[300svh] overflow-hidden bg-secondary" data-horizontal-scene>
         <div className="scroll-scene__pin">
           <div className="content-shell flex h-full flex-col justify-center py-20">
             <div className="flex items-end justify-between gap-6">
               <div><p className="editorial-label text-gold">03 — Selected work</p><h2 className="mt-5 display-lg">SPACES, MADE<br />TANGIBLE.</h2></div>
               <Link to="/projects" className="hidden editorial-label text-gold md:block">View all projects ↗</Link>
             </div>
-            <div className="relative mt-10 min-h-0 flex-1">
-              {projects.map((project, index) => (
-                <article key={project.slug} data-scene-panel className="absolute inset-0 grid items-center gap-8 md:grid-cols-12">
-                  <Link to="/projects/$slug" params={{ slug: project.slug }} data-cursor="VIEW PROJECT" className="project-image-wrap block h-full max-h-[58svh] md:col-span-8">
-                    <img src={project.image} alt={project.name} className="h-full w-full object-cover" />
+            <div data-horizontal-track className="mt-10 flex min-h-0 flex-1 items-center gap-8 md:gap-12">
+              {projects.map((project) => (
+                <article key={project.slug} className="grid h-full w-[86vw] max-w-[1180px] shrink-0 items-center gap-6 md:grid-cols-12 md:gap-10">
+                  <Link to="/projects/$slug" params={{ slug: project.slug }} data-cursor="VIEW PROJECT" className="project-image-wrap block h-[42svh] max-h-[620px] md:h-[58svh] md:col-span-8">
+                    <img src={project.image} alt={project.name} loading="lazy" className="h-full w-full object-cover" />
                     <span className="project-hover-label editorial-label">View project ↗</span>
                   </Link>
                   <div className="md:col-span-4">
