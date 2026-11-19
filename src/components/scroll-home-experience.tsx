@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import heroImage from "../assets/uni-hero.jpg";
 import mudraImage from "../assets/mudra-living.jpg";
@@ -7,7 +7,6 @@ import architectureImage from "../assets/architecture-study.jpg";
 import interiorImage from "../assets/interior-study.jpg";
 import studioImage from "../assets/studio.jpg";
 import { Button } from "./ui/button";
-import { SectionHeading } from "./section-heading";
 import { InteriorWalkthrough } from "./interior-walkthrough";
 import { ConsultationCta } from "./consultation-cta";
 import { ContactForm } from "./contact-form";
