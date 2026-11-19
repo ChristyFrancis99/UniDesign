@@ -63,7 +63,7 @@ function useScrollScenes() {
       scenes.forEach((scene) => {
         const image = scene.querySelector<HTMLElement>("[data-scene-image]");
         const panels = gsap.utils.toArray<HTMLElement>(scene.querySelectorAll("[data-scene-panel]"));
-        if (image && !reducedMotion) {
+        if (image && !reducedMotion && !scene.matches("[data-home-hero]")) {
           gsap.fromTo(image, { scale: 1.12, yPercent: 2 }, {
             scale: 1, yPercent: -2, ease: "none",
             scrollTrigger: { trigger: scene, start: "top bottom", end: "bottom top", scrub: 1 }
@@ -88,6 +88,8 @@ function useScrollScenes() {
       if (hero && !reducedMotion) {
         const heroImage = hero.querySelector<HTMLElement>("[data-scene-image]");
         const heroCopy = hero.querySelector<HTMLElement>("[data-hero-copy]");
+        if (heroImage) gsap.fromTo(heroImage, { clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)", duration: 1.35, ease: "expo.out" });
+        if (heroCopy) gsap.fromTo(heroCopy, { autoAlpha: 0, y: 36 }, { autoAlpha: 1, y: 0, duration: 1.05, delay: 0.35, ease: "power3.out" });
         const intro = gsap.timeline({ scrollTrigger: { trigger: hero, start: "top top", end: "bottom bottom", scrub: 1 } });
         if (heroImage) intro.to(heroImage, { scale: 0.78, clipPath: "inset(8% 8% 8% 8% round 2px)", ease: "none" }, 0);
         if (heroCopy) intro.to(heroCopy, { y: -90, autoAlpha: 0, ease: "none" }, 0);
