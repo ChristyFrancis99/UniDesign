@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
 
 const sectionLinks = [
-  ["The studio", "#studio"], ["Walkthrough", "#walkthrough"], ["Expertise", "#expertise"], ["Selected work", "#projects"], ["Material language", "#materials"], ["The process", "#process"], ["Studio philosophy", "#philosophy"], ["Contact", "#contact"], ["Consultation", "#consultation"], ["Interactive process", "#interactive-process"], ["Where we work", "#locations"], ["Detail hotspots", "#details"],
+  ["Hero", "#hero"], ["The studio", "#studio"], ["Walkthrough", "#walkthrough"], ["Expertise", "#expertise"], ["Selected work", "#projects"], ["Material language", "#materials"], ["The process", "#process"], ["Studio philosophy", "#philosophy"], ["Contact", "#contact"], ["Consultation", "#consultation"], ["Interactive process", "#interactive-process"], ["Where we work", "#locations"], ["Detail hotspots", "#details"],
 ] as const;
 
 const links = [
