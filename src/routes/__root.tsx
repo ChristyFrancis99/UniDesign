@@ -4,7 +4,6 @@ import { useEffect, type ReactNode } from "react";
 import { SiteFooter } from "../components/site-footer";
 import { SiteHeader } from "../components/site-header";
 import { PremiumInteractions } from "../components/premium-interactions";
-import { StudioDynamics } from "../components/studio-dynamics";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -97,7 +96,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <PremiumInteractions />
       <SiteHeader />
-      <main><MotionEnhancer /><Outlet />{location.pathname === "/" ? <StudioDynamics /> : null}</main>
+      <main><MotionEnhancer /><Outlet /></main>
       <SiteFooter />
     </QueryClientProvider>
   );
