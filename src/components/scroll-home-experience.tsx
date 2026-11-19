@@ -60,8 +60,8 @@ function useScrollScenes() {
         const panels = Array.from(scene.querySelectorAll<HTMLElement>("[data-scene-panel]"));
         panels.forEach((panel, index) => {
           const center = panels.length === 1 ? 0.5 : index / (panels.length - 1);
-          const opacity = clamp(1 - Math.abs(progress - center) * Math.max(2.4, panels.length * 1.35));
-          const offset = (center - progress) * 76;
+          const opacity = panels.length === 1 ? 1 : clamp(1 - Math.abs(progress - center) * Math.max(2.4, panels.length * 1.35));
+          const offset = panels.length === 1 ? 0 : (center - progress) * 76;
           panel.style.setProperty("--panel-opacity", String(opacity));
           panel.style.setProperty("--panel-y", `${offset}px`);
           panel.style.pointerEvents = opacity > 0.08 ? "auto" : "none";
@@ -90,8 +90,6 @@ function useScrollScenes() {
 
 export function ScrollHomeExperience() {
   useScrollScenes();
-  const [activeMaterial, setActiveMaterial] = useState(0);
-  const material = materials[activeMaterial];
 
   return (
     <div className="scroll-home">
@@ -199,12 +197,14 @@ export function ScrollHomeExperience() {
               <h2 className="mt-6 display-lg">THE DETAILS<br />MATTER.</h2>
               <p className="mt-6 text-sm leading-7 text-muted-foreground">Explore the ingredients that give a space its character. Scroll through the textures, tones and light that shape our work.</p>
               <div className="mt-10 border-t border-border">
-                {materials.map(([name], index) => <button key={name} onClick={() => setActiveMaterial(index)} className={`flex w-full items-center justify-between border-b border-border py-4 text-left ${activeMaterial === index ? "text-gold" : "text-foreground"}`}><span className="font-display text-2xl">{name}</span><span className="editorial-label">0{index + 1}</span></button>)}
+                {materials.map(([name], index) => <div key={name} className="flex items-center justify-between border-b border-border py-4"><span className="font-display text-2xl">{name}</span><span className="editorial-label text-gold">0{index + 1}</span></div>)}
               </div>
             </div>
-            <div className="md:col-span-7 md:col-start-6" data-scene-panel>
-              <div className="overflow-hidden"><img src={material[2]} alt={`${material[0]} material study`} className="aspect-[4/3] w-full object-cover" /></div>
-              <div className="mt-6 flex items-start justify-between gap-8"><h3 className="font-display text-4xl">{material[0]}</h3><p className="max-w-sm text-sm leading-7 text-muted-foreground">{material[1]}</p></div>
+            <div className="relative min-h-[390px] md:col-span-7 md:col-start-6">
+              {materials.map(([name, copy, image], index) => <article key={name} data-scene-panel className="absolute inset-0">
+                <div className="overflow-hidden"><img src={image} alt={`${name} material study`} className="aspect-[4/3] w-full object-cover" /></div>
+                <div className="mt-6 flex items-start justify-between gap-8"><h3 className="font-display text-4xl">{name}</h3><p className="max-w-sm text-sm leading-7 text-muted-foreground">{copy}</p></div>
+              </article>)}
             </div>
           </div>
         </div>
