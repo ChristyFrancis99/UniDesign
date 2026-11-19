@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const VIDEO_SRC = "/animations/original-video.mp4";
 const POSTER_SRC = "/animations/interior-walkthrough/frame_001.png";
@@ -14,89 +16,41 @@ export function InteriorWalkthrough() {
     const progressBar = progressRef.current;
     if (!section || !video) return;
 
-    let animationFrame = 0;
-    let isSeeking = false;
-    let metadataReady = video.readyState >= HTMLMediaElement.HAVE_METADATA;
-    let targetProgress = 0;
-    let displayedProgress = 0;
-    let lastSeekTime = -1;
-
-    const clamp = (value: number) => Math.min(1, Math.max(0, value));
-
-    const readScrollProgress = () => {
-      const sectionTop = section.getBoundingClientRect().top + window.scrollY;
-      const scrollRange = Math.max(1, section.offsetHeight - window.innerHeight);
-      targetProgress = clamp((window.scrollY - sectionTop) / scrollRange);
-      requestFrame();
-    };
-
-    const render = () => {
-      animationFrame = 0;
-
-      // Ease the video timeline toward the actual scroll position. This keeps
-      // small wheel/touch movements from feeling like abrupt frame jumps.
-      displayedProgress += (targetProgress - displayedProgress) * 0.18;
-      if (Math.abs(targetProgress - displayedProgress) < 0.001) {
-        displayedProgress = targetProgress;
-      }
-
-      if (progressBar) {
-        progressBar.style.transform = `scaleX(${displayedProgress})`;
-      }
-
-      if (metadataReady && Number.isFinite(video.duration) && video.duration > 0) {
-        const nextTime = displayedProgress * video.duration;
-        const shouldSeek =
-          Math.abs(nextTime - video.currentTime) > 0.045 &&
-          Math.abs(nextTime - lastSeekTime) > 0.045;
-
-        if (!isSeeking && !video.seeking && shouldSeek) {
-          isSeeking = true;
-          lastSeekTime = nextTime;
-          video.currentTime = nextTime;
-        }
-      }
-
-      if (Math.abs(targetProgress - displayedProgress) >= 0.001) {
-        requestFrame();
-      }
-    };
-
-    const requestFrame = () => {
-      if (!animationFrame) {
-        animationFrame = window.requestAnimationFrame(render);
-      }
-    };
-
-    const handleSeeked = () => {
-      isSeeking = false;
-      // Queue the latest scroll position after the browser has decoded the
-      // previous frame, rather than allowing stale seeks to pile up.
-      if (Math.abs(targetProgress - displayedProgress) >= 0.001) {
-        requestFrame();
-      } else if (metadataReady) {
-        requestFrame();
-      }
-    };
-
-    const handleMetadata = () => {
-      metadataReady = true;
-      readScrollProgress();
-    };
-
+    gsap.registerPlugin(ScrollTrigger);
     video.pause();
-    video.addEventListener("loadedmetadata", handleMetadata);
-    video.addEventListener("seeked", handleSeeked);
-    window.addEventListener("scroll", readScrollProgress, { passive: true });
-    window.addEventListener("resize", readScrollProgress);
-    readScrollProgress();
+    let scrubTween: gsap.core.Tween | undefined;
+    let trigger: ScrollTrigger | undefined;
+
+    const setupScrub = () => {
+      if (!Number.isFinite(video.duration) || video.duration <= 0 || scrubTween) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      scrubTween = gsap.to(video, {
+        currentTime: video.duration,
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.25,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            if (progressBar) gsap.set(progressBar, { scaleX: self.progress });
+          },
+        },
+      });
+      trigger = scrubTween.scrollTrigger as ScrollTrigger;
+      ScrollTrigger.refresh();
+    };
+
+    video.addEventListener("loadedmetadata", setupScrub);
+    if (video.readyState >= HTMLMediaElement.HAVE_METADATA) setupScrub();
 
     return () => {
-      video.removeEventListener("loadedmetadata", handleMetadata);
-      video.removeEventListener("seeked", handleSeeked);
-      window.removeEventListener("scroll", readScrollProgress);
-      window.removeEventListener("resize", readScrollProgress);
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      video.removeEventListener("loadedmetadata", setupScrub);
+      scrubTween?.scrollTrigger?.kill();
+      scrubTween?.kill();
+      trigger?.kill();
     };
   }, []);
 
