@@ -138,7 +138,7 @@ export function ScrollHomeExperience() {
 
   return (
     <div className="scroll-home">
-      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[190svh] bg-foreground text-warm-white" data-home-hero>
+      <section data-scroll-scene data-motion-skip="true" id="hero" className="scroll-scene h-[190svh] bg-foreground text-warm-white" data-home-hero>
         <div className="scroll-scene__pin">
           <img data-scene-image src={heroImage} alt="Contemporary UnI Design residence" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-black/20" />
@@ -162,7 +162,7 @@ export function ScrollHomeExperience() {
         </div>
       </section>
 
-      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[180svh] bg-background">
+      <section data-scroll-scene data-motion-skip="true" id="studio" className="scroll-scene h-[180svh] bg-background">
         <div className="scroll-scene__pin">
           <div className="content-shell grid h-full items-center gap-10 py-24 md:grid-cols-12">
             <div className="md:col-span-6" data-scene-panel>
@@ -179,9 +179,9 @@ export function ScrollHomeExperience() {
         </div>
       </section>
 
-      <InteriorWalkthrough />
+      <div id="walkthrough"><InteriorWalkthrough /></div>
 
-      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[260svh] bg-foreground text-warm-white" data-theme-flip>
+      <section data-scroll-scene data-motion-skip="true" id="expertise" id="process" className="scroll-scene h-[260svh] bg-foreground text-warm-white" data-theme-flip>
         <div className="scroll-scene__pin">
           <div className="content-shell flex h-full flex-col justify-center py-20">
             <div className="flex items-end justify-between gap-6">
@@ -205,7 +205,7 @@ export function ScrollHomeExperience() {
         </div>
       </section>
 
-      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[300svh] overflow-hidden bg-secondary" data-horizontal-scene>
+      <section data-scroll-scene data-motion-skip="true" id="projects" className="scroll-scene h-[300svh] overflow-hidden bg-secondary" data-horizontal-scene>
         <div className="scroll-scene__pin">
           <div className="content-shell flex h-full flex-col justify-center py-20">
             <div className="flex items-end justify-between gap-6">
@@ -234,7 +234,7 @@ export function ScrollHomeExperience() {
         </div>
       </section>
 
-      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[250svh] bg-background">
+      <section data-scroll-scene data-motion-skip="true" id="materials" className="scroll-scene h-[250svh] bg-background">
         <div className="scroll-scene__pin">
           <div className="content-shell grid h-full items-center gap-10 py-20 md:grid-cols-12">
             <div className="md:col-span-4">
@@ -272,7 +272,7 @@ export function ScrollHomeExperience() {
         </div>
       </section>
 
-      <section data-scroll-scene data-motion-skip="true" className="scroll-scene h-[170svh] bg-background">
+      <section data-scroll-scene data-motion-skip="true" id="philosophy" className="scroll-scene h-[170svh] bg-background">
         <div className="scroll-scene__pin">
           <div className="content-shell grid h-full items-center gap-12 py-20 md:grid-cols-12">
             <div className="md:col-span-7" data-scene-panel><img src={interiorImage} alt="Considered interior by UnI Design Group" className="aspect-[4/5] max-h-[72svh] w-full object-cover" /></div>
@@ -281,15 +281,15 @@ export function ScrollHomeExperience() {
         </div>
       </section>
 
-      <section className="bg-secondary py-24">
+      <section id="contact" className="bg-secondary py-24">
         <div className="content-shell grid gap-12 md:grid-cols-2 md:items-center">
           <div><p className="editorial-label text-gold">07 — Begin a conversation</p><h2 className="mt-6 display-lg">HAVE A SPACE<br />IN MIND?</h2><p className="mt-6 max-w-md leading-7 text-muted-foreground">Tell us what you are imagining. We would love to understand the brief and explore what it could become.</p><Button asChild variant="editorial" className="mt-8"><Link to="/contact">Start your project →</Link></Button></div>
           <div className="border border-border bg-background p-5 md:p-8"><ContactForm /></div>
         </div>
       </section>
 
-      <ConsultationCta />
-      <StudioDynamics />
+      <div id="consultation"><ConsultationCta /></div>
+      <div id="interactive-process"><StudioDynamics /></div>
     </div>
   );
 }
