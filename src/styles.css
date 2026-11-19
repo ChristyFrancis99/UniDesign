@@ -34,3 +34,19 @@ a,button,input,textarea,select { transition: color .35s ease,background-color .3
 @media (max-width:767px) { .content-shell { width:calc(100% - 40px); } .motion-reveal { transform:translate3d(0,24px,0); } .motion-reveal[data-motion="left"],.motion-reveal[data-motion="right"] { transform:translate3d(0,24px,0); } .motion-reveal[data-motion="left"].is-visible,.motion-reveal[data-motion="right"].is-visible { transform:translate3d(0,0,0); } }
 @media (pointer:coarse) { .premium-cursor { display:none; } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; } .motion-reveal,.motion-reveal[data-motion="left"],.motion-reveal[data-motion="right"],.motion-reveal[data-motion="scale"] { opacity:1; transform:none; } }
+
+
+/* Scroll-led homepage scenes */
+.scroll-scene { position: relative; }
+.scroll-scene__pin { position: sticky; top: 0; height: 100svh; min-height: 560px; overflow: hidden; isolation: isolate; }
+.scroll-scene [data-scene-panel] { opacity: var(--panel-opacity, 1); transform: translate3d(0, var(--panel-y, 0px), 0); transition: opacity .18s linear, transform .18s linear; will-change: opacity, transform; }
+.scroll-scene [data-scene-image] { will-change: transform; }
+.scroll-home { overflow: clip; }
+@media (max-width: 767px) {
+  .scroll-scene__pin { min-height: 620px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-scene { height: auto !important; }
+  .scroll-scene__pin { position: relative; height: auto; min-height: 100svh; }
+  .scroll-scene [data-scene-panel] { opacity: 1 !important; transform: none !important; }
+}
